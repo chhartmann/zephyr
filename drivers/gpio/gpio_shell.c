@@ -75,6 +75,9 @@ static int cmd_gpio_conf(const struct shell *shell, size_t argc, char **argv)
 		shell_print(shell, "Configuring %s pin %d",
 			    argv[args_indx.port], index);
 		gpio_pin_configure(dev, index, type);
+	} else {
+		shell_error(shell, "Can't get device for port");
+		return -ENOTSUP;
 	}
 
 	return 0;

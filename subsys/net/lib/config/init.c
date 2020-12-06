@@ -460,9 +460,10 @@ int net_config_init_app(const struct device *dev, const char *app_info)
 		NET_ERR("Network initialization failed (%d)", ret);
 	}
 
-	if (IS_ENABLED(CONFIG_NET_CONFIG_CLOCK_SNTP_INIT)) {
-		net_init_clock_via_sntp();
-	}
+	// this is too early with dhcp
+	// if (IS_ENABLED(CONFIG_NET_CONFIG_CLOCK_SNTP_INIT)) {
+	// 	net_init_clock_via_sntp();
+	// }
 
 	/* This is activated late as it requires the network stack to be up
 	 * and running before syslog messages can be sent to network.

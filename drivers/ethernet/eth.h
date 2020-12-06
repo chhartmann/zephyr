@@ -34,7 +34,8 @@ static inline void gen_random_mac(uint8_t *mac_addr, uint8_t b0, uint8_t b1, uin
 {
 	uint32_t entropy;
 
-	entropy = sys_rand32_get();
+	//entropy = sys_rand32_get();
+	entropy = *((uint32_t*)(0x8100000));
 
 	mac_addr[0] = b0;
 	mac_addr[1] = b1;

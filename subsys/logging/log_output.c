@@ -14,6 +14,9 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+#include <posix/time.h>
+#include <sys/timeutil.h>
+
 #define LOG_COLOR_CODE_DEFAULT "\x1B[0m"
 #define LOG_COLOR_CODE_RED     "\x1B[1;31m"
 #define LOG_COLOR_CODE_YELLOW  "\x1B[1;33m"
@@ -161,8 +164,53 @@ static int timestamp_print(const struct log_output *log_output,
 		(flags & LOG_OUTPUT_FLAG_FORMAT_TIMESTAMP) |
 		(flags & LOG_OUTPUT_FLAG_FORMAT_SYSLOG);
 
+	struct timespec tp;
+	int res = clock_gettime(CLOCK_REALTIME, &tp);
+	if (res == 0) {
+		uint32_t act_timestamp;
+		uint32_t act_freq;
+		uint32_t timestamp_diff;
+		uint32_t ns_delta;
+		uint32_t s_delta;
+		struct tm tm;
 
-	if (!format) {
+		// correct difference of timestamp from log and current time
+		if (sys_clock_hw_cycles_per_sec() > 1000000) {
+			act_timestamp = k_uptime_get_32();
+			act_freq = 1000;
+		} else {
+			act_timestamp = k_cycle_get_32();
+			act_freq = sys_clock_hw_cycles_per_sec();
+		}
+
+		// remainder = timestamp % freq;
+		// ms = (remainder * 1000U) / freq;
+		// us = (1000 * (remainder * 1000U - (ms * freq))) / freq;
+
+		timestamp_diff = (act_timestamp - timestamp);
+		ns_delta = (((timestamp_diff % freq) * 1000U) / freq) * 1000000U;
+		s_delta = timestamp_diff / freq;
+		tp.tv_sec -= s_delta;
+
+		if (tp.tv_nsec + 1000000000U - ns_delta >= 1000000000U) {
+			tp.tv_nsec -= ns_delta;
+		} else {
+			tp.tv_nsec += (1000000000U - ns_delta);
+			tp.tv_sec -= 1U;
+		}
+
+		gmtime_r(&tp.tv_sec, &tm);
+		length = print_formatted(log_output,
+			"%d-%02u-%02u %02u:%02u:%02u:%03u ",
+		    tm.tm_year + 1900,
+		    tm.tm_mon + 1,
+		    tm.tm_mday,
+		    tm.tm_hour,
+		    tm.tm_min,
+		    tm.tm_sec,
+			tp.tv_nsec / 1000000U);
+
+	} else if (!format) {
 		length = print_formatted(log_output, "[%08lu] ", timestamp);
 	} else if (freq != 0U) {
 		uint32_t total_seconds;
@@ -184,6 +232,7 @@ static int timestamp_print(const struct log_output *log_output,
 		remainder = timestamp % freq;
 		ms = (remainder * 1000U) / freq;
 		us = (1000 * (remainder * 1000U - (ms * freq))) / freq;
+		
 
 		if (IS_ENABLED(CONFIG_LOG_BACKEND_NET) &&
 		    flags & LOG_OUTPUT_FLAG_FORMAT_SYSLOG) {
