@@ -98,7 +98,7 @@ static void put(const struct log_backend *const backend,
 	log_msg_get(msg);
 
 	flags |= LOG_OUTPUT_FLAG_TIMESTAMP;
-	flags |= LOG_OUTPUT_FLAG_FORMAT_TIMESTAMP;			
+	flags |= LOG_OUTPUT_FLAG_FORMAT_TIMESTAMP;
 
 	log_output_msg_process(&log_output_rb, msg, flags);
 
@@ -187,8 +187,8 @@ void log_buffer_clear() {
 
 static int cmd_show(const struct shell *shell, size_t argc, char **argv) {
 	char line[CONFIG_LOG_BACKEND_RB_SLOT_SIZE];
-	
-	uint32_t index = log_get_next_line(index, line);
+
+	uint32_t index = log_get_next_line(LOG_GET_FIRST, line);
 	while (index != LOG_GET_FIRST) {
 		shell_fprintf(shell, SHELL_NORMAL, "%s", line);
 		index = log_get_next_line(index, line);

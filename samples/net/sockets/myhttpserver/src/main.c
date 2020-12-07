@@ -59,7 +59,7 @@ int get_log_handler(struct mg_connection *conn, void *cbdata)
 		  "Content-Type: text/plain\r\n"
 		  "Connection: close\r\n\r\n");
 
-	uint32_t index = log_get_next_line(index, line);
+	uint32_t index = log_get_next_line(LOG_GET_FIRST, line);
 	while (index != LOG_GET_FIRST) {
 		mg_printf(conn, line);
 		index = log_get_next_line(index, line);
@@ -140,7 +140,7 @@ void main(void)
 	net_mgmt_init_event_callback(&mgmt_cb, handler,
 				     NET_EVENT_IPV4_ADDR_ADD);
 	net_mgmt_add_event_callback(&mgmt_cb);
-	
+
 	pthread_attr_t civetweb_attr;
 	pthread_t civetweb_thread;
 
