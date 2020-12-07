@@ -2,13 +2,8 @@ checkoutLocation: zephyr
 workspaceLocation: zephyr
 
 tasks:
-  - init: 
-      cd /workspace
-      west init -l zephyr
-      west update
-    command:
-      cd /workspace/zephyr/samples/net/socket/myhttpserver
-      west build -b nucleo_h743zi
+  - init: cd /workspace && west init -l zephyr && west update
+    command: cd /workspace/zephyr/samples/net/socket/myhttpserver && west build -b nucleo_h743zi
 
 image:
   file: .gitpod.Dockerfile
