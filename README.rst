@@ -1,87 +1,27 @@
-.. raw:: html
+HTTP server for nucleo_h743zi
+#############################
 
-   <a href="https://www.zephyrproject.org">
-     <p align="center">
-       <img src="doc/images/Zephyr-Project.png">
-     </p>
-   </a>
+Overview
+********
+This is an extention of the existing webserver example for nucleo_h743zi board.
+* Telnet and serial shell are enabled with GPIO shell and date shell configured.
+* The ringbuffer log, which was part in earlier zephyr version, has been adapted.
+* It uses tha last 64Kbyte of the RAM. It can be printed with a shell command similar to dmesg.
+* The logging prefix is extended with a absolut timestamp.
+* DHCP is enabled. MAC address is currently read from flash. This will change in the future. By default only hardcoded or random MAC address is supported.
+* SNTP is used to get the current time. The default code for doing this is executed too early. Therefore a hook has been added where the SNTP routine is called.
 
-   <a href="https://bestpractices.coreinfrastructure.org/projects/74"><img
-   src="https://bestpractices.coreinfrastructure.org/projects/74/badge"></a>
-   <a href="https://buildkite.com/zephyr/zephyr">
-   <img
-   src="https://badge.buildkite.com/f5bd0dc88306cee17c9b38e78d11bb74a6291e3f40e7d13f31.svg?branch=master"></a>
+This is more a proof of concept than a real project.
+Generally it is clearly not a good idea to base the example on a fork of zephyr instead of using a separate repository the example.
 
 
-The Zephyr Project is a scalable real-time operating system (RTOS) supporting
-multiple hardware architectures, optimized for resource constrained devices,
-and built with security in mind.
+Requirements
+************
+The MAC address cat be set with STM32CubeProgrammer at 0x8100000.
+The software can be flashed with STM32CubeProgrammer or directly with the virtual file system of ST-LINK V3 attached to the nucleo_h743zi2 board.
 
-The Zephyr OS is based on a small-footprint kernel designed for use on
-resource-constrained systems: from simple embedded environmental sensors and
-LED wearables to sophisticated smart watches and IoT wireless gateways.
-
-The Zephyr kernel supports multiple architectures, including ARM Cortex-M,
-Intel x86, ARC, Nios II, Tensilica Xtensa, and RISC-V, and a large number of
-`supported boards`_.
-
-.. below included in doc/introduction/introduction.rst
-
-.. start_include_here
-
-Getting Started
-***************
-
-Welcome to Zephyr! See the `Introduction to Zephyr`_ for a high-level overview,
-and the documentation's `Getting Started Guide`_ to start developing.
-
-Community Support
-*****************
-
-Community support is provided via mailing lists and Slack; see the Resources
-below for details.
-
-.. _project-resources:
-
-Resources
-*********
-
-Here's a quick summary of resources to help you find your way around:
-
-* **Help**: `Asking for Help Tips`_
-* **Documentation**: http://docs.zephyrproject.org (`Getting Started Guide`_)
-* **Source Code**: https://github.com/zephyrproject-rtos/zephyr is the main
-  repository; https://elixir.bootlin.com/zephyr/latest/source contains a
-  searchable index
-* **Releases**: https://github.com/zephyrproject-rtos/zephyr/releases
-* **Samples and example code**: see `Sample and Demo Code Examples`_
-* **Mailing Lists**: users@lists.zephyrproject.org and
-  devel@lists.zephyrproject.org are the main user and developer mailing lists,
-  respectively. You can join the developer's list and search its archives at
-  `Zephyr Development mailing list`_. The other `Zephyr mailing list
-  subgroups`_ have their own archives and sign-up pages.
-* **Nightly CI Build Status**: https://lists.zephyrproject.org/g/builds
-  The builds@lists.zephyrproject.org mailing list archives the CI
-  (shippable) nightly build results.
-* **Chat**: Zephyr's Slack workspace is https://zephyrproject.slack.com.  Use
-  this `Slack Invite`_ to register.
-* **Contributing**: see the `Contribution Guide`_
-* **Wiki**: `Zephyr GitHub wiki`_
-* **Issues**: https://github.com/zephyrproject-rtos/zephyr/issues
-* **Security Issues**: Email vulnerabilities@zephyrproject.org to report
-  security issues; also see our `Security`_ documentation. Security issues are
-  tracked separately at https://zephyrprojectsec.atlassian.net.
-* **Zephyr Project Website**: https://zephyrproject.org
-
-.. _Slack Invite: https://tinyurl.com/y5glwylp
-.. _supported boards: http://docs.zephyrproject.org/latest/boards/index.html
-.. _Zephyr Documentation: http://docs.zephyrproject.org
-.. _Introduction to Zephyr: http://docs.zephyrproject.org/latest/introduction/index.html
-.. _Getting Started Guide: http://docs.zephyrproject.org/latest/getting_started/index.html
-.. _Contribution Guide: http://docs.zephyrproject.org/latest/contribute/index.html
-.. _Zephyr GitHub wiki: https://github.com/zephyrproject-rtos/zephyr/wiki
-.. _Zephyr Development mailing list: https://lists.zephyrproject.org/g/devel
-.. _Zephyr mailing list subgroups: https://lists.zephyrproject.org/g/main/subgroups
-.. _Sample and Demo Code Examples: http://docs.zephyrproject.org/latest/samples/index.html
-.. _Security: http://docs.zephyrproject.org/latest/security/index.html
-.. _Asking for Help Tips: https://docs.zephyrproject.org/latest/guides/getting-help.html
+Building and Running
+********************
+Getting started is easiest with _gitpod: https://gitpod.io/#https://github.com/chhartmann/zephyr
+This will install all libraries with west and start the build. A build task is configured for compilation from within the IDE.
+When developing locally, build and flash can be done with "west flash --runner stm32cubeprogrammer"
