@@ -1,0 +1,28 @@
+{
+	"tasks": [
+		{
+			"label": "west build -b nucleo_h743zi",
+			"type": "shell",
+			"command": "west",
+			"args": [
+				"build",
+				"-b",
+				"nucleo_h743zi"
+			],
+			"options": {
+				"cwd": "/workspace/zephyr/samples/net/sockets/myhttpserver"
+			},
+			"presentation": {
+				"clear": true
+			},
+			"problemMatcher": {
+				"base":"$gcc",
+				"fileLocation": ["relative", "/workspace/zephyr/samples/net/sockets/myhttpserver/src"]
+			},
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		}
+	]
+}
