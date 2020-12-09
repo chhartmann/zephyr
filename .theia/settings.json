@@ -7,7 +7,6 @@
         "/workspace/zephyr/samples/net/sockets/myhttpserver/build/zephyr/include/generated",
         "/workspace/zephyr/include",
         "/workspace/zephyr/include/posix",
-        "/workspace/zephyr/include/posix",
         "/workspace/zephyr/include/drivers",
         "/workspace/zephyr/lib/libc/minimal/include",
         "/workspace/zephyr/soc/arm/st_stm32/stm32h7",
@@ -25,9 +24,5 @@
 		],
     "C_Cpp.default.cStandard": "c11",
     "C_Cpp.default.cppStandard": "c++17",
-    "files.associations": {
-        "pthread.h": "c",
-        "zephyr.h": "c"
-    },
     "editor.tabSize" : 3
 }
