@@ -46,6 +46,9 @@ API Changes
   ``user_data`` as arguments instead of structure which contained list node,
   callback and user data.
 
+* The :c:func:`mqtt_keepalive_time_left` function now returns -1 if keep alive
+  messages are disabled by setting ``CONFIG_MQTT_KEEPALIVE`` to 0.
+
 Deprecated in this release
 ==========================
 
@@ -108,6 +111,10 @@ Boards & SoC Support
   * SPARC QEMU for emulating LEON3 processors and running kernel tests
 
 * Made these changes in other boards:
+
+  * nRF5340 DK: Selected TF-M as the default Secure Processing Element
+    (SPE) when building Zephyr for the non-secure domain.
+
 
 * Added support for these following shields:
 
@@ -244,6 +251,8 @@ Libraries / Subsystems
 * Management
 
   * MCUmgr
+
+    * Added support for flash devices that have non-0xff erase value.
 
   * updatehub
 

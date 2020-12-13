@@ -113,7 +113,8 @@ struct uarte_nrfx_data {
 #ifdef CONFIG_UART_ASYNC_API
 	struct uarte_async_cb *async;
 #endif
-#ifdef CONFIG_DEVICE_POWER_MANAGEMENT
+	atomic_val_t poll_out_lock;
+#ifdef CONFIG_PM_DEVICE
 	uint32_t pm_state;
 #endif
 	uint8_t char_out;
@@ -1122,7 +1123,7 @@ static void uarte_nrfx_poll_out(const struct device *dev, unsigned char c)
 	NRF_UARTE_Type *uarte = get_uarte_instance(dev);
 	int key;
 
-#ifdef CONFIG_DEVICE_POWER_MANAGEMENT
+#ifdef CONFIG_PM_DEVICE
 	if (data->pm_state != DEVICE_PM_ACTIVE_STATE) {
 		return;
 	}
@@ -1259,9 +1260,16 @@ static int uarte_nrfx_irq_tx_ready_complete(const struct device *dev)
 	 * enabled, otherwise this function would always return true no matter
 	 * what would be the source of interrupt.
 	 */
-	return !data->int_driven->disable_tx_irq &&
-	       nrf_uarte_event_check(uarte, NRF_UARTE_EVENT_TXSTOPPED) &&
-	       nrf_uarte_int_enable_check(uarte, NRF_UARTE_INT_TXSTOPPED_MASK);
+	bool ready = !data->int_driven->disable_tx_irq &&
+		     nrf_uarte_event_check(uarte, NRF_UARTE_EVENT_TXSTOPPED) &&
+		     nrf_uarte_int_enable_check(uarte,
+						NRF_UARTE_INT_TXSTOPPED_MASK);
+
+	if (ready) {
+		data->int_driven->fifo_fill_lock = 0;
+	}
+
+	return ready;
 }
 
 static int uarte_nrfx_irq_rx_ready(const struct device *dev)
@@ -1423,7 +1431,7 @@ static int uarte_instance_init(const struct device *dev,
 		return err;
 	}
 
-#ifdef CONFIG_DEVICE_POWER_MANAGEMENT
+#ifdef CONFIG_PM_DEVICE
 	data->pm_state = DEVICE_PM_ACTIVE_STATE;
 #endif
 
@@ -1472,7 +1480,7 @@ static int uarte_instance_init(const struct device *dev,
 	return 0;
 }
 
-#ifdef CONFIG_DEVICE_POWER_MANAGEMENT
+#ifdef CONFIG_PM_DEVICE
 
 static void uarte_nrfx_pins_enable(const struct device *dev, bool enable)
 {
@@ -1608,7 +1616,7 @@ static int uarte_nrfx_pm_control(const struct device *dev,
 
 	return 0;
 }
-#endif /* CONFIG_DEVICE_POWER_MANAGEMENT */
+#endif /* CONFIG_PM_DEVICE */
 
 #define UARTE(idx)			DT_NODELABEL(uart##idx)
 #define UARTE_HAS_PROP(idx, prop)	DT_NODE_HAS_PROP(UARTE(idx), prop)
