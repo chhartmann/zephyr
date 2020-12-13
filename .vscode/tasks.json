@@ -1,0 +1,55 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "west build -b nucleo_h743zi",
+			"type": "shell",
+			"group": "build",
+			"command": "west",
+			"args": [
+				"build",
+				"-b",
+				"nucleo_h743zi"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}/samples/net/sockets/myhttpserver"
+			},
+			"problemMatcher": {
+				"base": "$gcc",
+				"fileLocation" : ["relativ", "samples/net/sockets/myhttpserver"]
+			}
+		},
+		{
+			"label": "west flash --runner stm32cubeprogrammer",
+			"type": "shell",
+			"group": "build",
+			"command": "west",
+			"args": [
+				"flash",
+				"--runner",
+				"stm32cubeprogrammer"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}/samples/net/sockets/myhttpserver"
+			},
+			"problemMatcher": {
+				"base": "$gcc",
+				"fileLocation" : ["relativ", "samples/net/sockets/myhttpserver"]
+			}
+		},
+		{
+			"label": "west build -r guiconfig",
+			"type": "shell",
+			"command": "west",
+			"args": [
+				"build",
+				"-t",
+				"guiconfig"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}/samples/net/sockets/myhttpserver"
+			},
+			"problemMatcher": []
+		}
+	]
+}

@@ -1,0 +1,29 @@
+{
+    "C_Cpp.default.forcedInclude": [
+        "samples/net/sockets/myhttpserver/build/zephyr/include/generated/autoconf.h",
+        "include/toolchain/zephyr_stdint.h"
+    ],
+    "C_Cpp.default.includePath": [
+        "samples/net/sockets/myhttpserver/build/zephyr/include/generated",
+        "include",
+        "include/posix",
+        "include/drivers",
+        "lib/libc/minimal/include",
+        "soc/arm/st_stm32/stm32h7",
+        "soc/arm/st_stm32/common",
+        "../hal/cmsis/CMSIS/Core/Include",
+        "../modules/lib/civetweb/include",
+        "../modules/hal/stm32/stm32cube/stm32h7xx/soc",
+        "../modules/hal/stm32/stm32cube/stm32h7xx/common/include",
+        "../modules/hal/cmsis/CMSIS/Core/Include"
+    ],
+    "C_Cpp.default.defines": [
+        "KERNEL",
+        "_FORTIFY_SOURCE=2",
+        "__PROGRAM_START",
+        "__ZEPHYR__=1"
+		],
+    "C_Cpp.default.cStandard": "c11",
+    "C_Cpp.default.cppStandard": "c++17",
+    "editor.tabSize" : 3
+}
