@@ -26,8 +26,6 @@
 			"command": "west",
 			"args": [
 				"flash",
-				"--runner",
-				"stm32cubeprogrammer"
 			],
 			"options": {
 				"cwd": "${workspaceFolder}/samples/net/sockets/myhttpserver"
