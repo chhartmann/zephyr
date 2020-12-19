@@ -54,6 +54,9 @@ static int malloc_prepare(const struct device *unused)
 
 void *realloc(void *ptr, size_t requested_size)
 {
+	if (ptr == NULL) {
+		return malloc(requested_size);
+	}
 	void *ret = sys_heap_realloc(&z_malloc_heap, ptr, requested_size);
 
 	return ret == NULL ? ptr : ret;

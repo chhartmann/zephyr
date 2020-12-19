@@ -40,6 +40,20 @@ extern int net_init_clock_via_sntp(void);
 
 K_THREAD_STACK_DEFINE(civetweb_stack, CIVETWEB_MAIN_THREAD_STACK_SIZE);
 
+void log_proxy(const char* fmt, ...) {
+	struct log_msg_ids src_level = {
+		.domain_id = CONFIG_LOG_DOMAIN_ID,
+		.level = LOG_LEVEL_INF,
+		.source_id = (uint16_t)LOG_CURRENT_MODULE_ID()
+	};
+
+	va_list myargs;
+	va_start(myargs, fmt);
+	log_generic(src_level, fmt, myargs, LOG_STRDUP_CHECK_EXEC);
+	va_end(myargs);
+}
+
+
 static struct net_mgmt_event_callback mgmt_cb;
 
 struct output_struct {
@@ -131,8 +145,6 @@ static int set_output_handler(struct mg_connection *conn, void *cbdata) {
 	int dlen = mg_read(conn, buffer, sizeof(buffer) - 1);
 	cJSON *obj, *elem;
 
-	LOG_INF("Request from %s", log_strdup(ri->remote_addr));
-
 	if (0 != strcmp(ri->request_method, "POST")) {
 		send_error(conn, "Only POST requests are allowed\n");
 		return 400;
@@ -170,10 +182,7 @@ static int set_output_handler(struct mg_connection *conn, void *cbdata) {
 
 static int get_log_handler(struct mg_connection *conn, void *cbdata)
 {
-	const struct mg_request_info *ri = mg_get_request_info(conn);
 	char line[CONFIG_LOG_BACKEND_RB_SLOT_SIZE];
-
-	LOG_INF("Request from %s", log_strdup(ri->remote_addr));
 
 	mg_printf(conn,
 		  "HTTP/1.1 200 OK\r\n"
@@ -192,9 +201,6 @@ static int get_log_handler(struct mg_connection *conn, void *cbdata)
 
 static int hello_world_handler(struct mg_connection *conn, void *cbdata)
 {
-	const struct mg_request_info *ri = mg_get_request_info(conn);
-	LOG_INF("Request from %s\n", log_strdup(ri->remote_addr));
-
 	send_ok(conn);
 	mg_printf(conn, "<html><body>");
 	mg_printf(conn, "<h3>Hello World from Zephyr!</h3>");

@@ -4,10 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+
+extern void log_proxy(const char* fmt, ...);
+
 static void log_access(const struct mg_connection *conn)
 {
 	const struct mg_request_info *ri;
-	char src_addr[IP_ADDR_STR_LEN];
 
 	if (!conn || !conn->dom_ctx) {
 		return;
@@ -15,14 +17,10 @@ static void log_access(const struct mg_connection *conn)
 
 	ri = &conn->request_info;
 
-	sockaddr_to_string(src_addr, sizeof(src_addr), &conn->client.rsa);
-
-	printf("%s - \"%s %s%s%s HTTP/%s\" %d\n",
-	       src_addr,
+	log_proxy("%s - %s from %s HTTP/%s %d",
 	       ri->request_method ? ri->request_method : "-",
 	       ri->request_uri ? ri->request_uri : "-",
-	       ri->query_string ? "?" : "",
-	       ri->query_string ? ri->query_string : "",
+	       ri->remote_addr ? ri->remote_addr : "-",
 	       ri->http_version,
 	       conn->status_code);
 }
