@@ -80,7 +80,22 @@ static void trace(const uint8_t *data, size_t length)
 
 static int char_out(uint8_t *data, size_t length, void *ctx)
 {
-	trace(data, length);
+	static uint32_t index = 0;
+	static uint8_t immediate_buffer[CONFIG_LOG_BACKEND_RB_SLOT_SIZE - 4];
+
+	if (length == 0) {
+		trace(immediate_buffer, index);
+		index = 0;
+	} else if (length == 1) {
+		immediate_buffer[index++] = *data;
+		if (index == sizeof(immediate_buffer) - 1) {
+			trace(immediate_buffer, index);
+			index = 0;
+		}
+	} else {
+		trace(data, length);
+		index = 0;		
+	}
 
 	return length;
 }
@@ -163,20 +178,20 @@ const struct log_backend_api log_backend_rb_api = {
 LOG_BACKEND_DEFINE(log_backend_rb, log_backend_rb_api, true);
 
 // interface
-uint32_t log_get_next_line(uint32_t index, char line[CONFIG_LOG_BACKEND_RB_SLOT_SIZE]) {
-	// maybe locking with ringbuf.lock would be better
-	uint32_t ret_index = LOG_GET_FIRST; // ret_index is LOG_GET_FIRST, when no msg is returned
-	if (index == LOG_GET_FIRST) {
+bool log_get_next_line(bool begin, char line[CONFIG_LOG_BACKEND_RB_SLOT_SIZE]) {
+	static uint32_t index = 0; // not thread safe - when used in parallel, not all lines will be shown
+	bool end = false;
+	if (begin) {
 		index = ringbuf.head;
 	}
 	if (index != ringbuf.tail) {
-		memcpy(line, &ringbuf.buf.buf8[index + 4], CONFIG_LOG_BACKEND_RB_SLOT_SIZE - 4);
+		memcpy(line, &ringbuf.buf.buf8[(index & ringbuf.mask) + 4], CONFIG_LOG_BACKEND_RB_SLOT_SIZE - 4);
 		line[CONFIG_LOG_BACKEND_RB_SLOT_SIZE - 4] = '\0';
-		ret_index = (index + CONFIG_LOG_BACKEND_RB_SLOT_SIZE) % CONFIG_LOG_BACKEND_RB_MEM_SIZE;
+		index += CONFIG_LOG_BACKEND_RB_SLOT_SIZE;
 	} else {
-		index = LOG_GET_FIRST;
-	}
-	return ret_index;
+		end = true;
+	};
+	return end;
 }
 
 void log_buffer_clear() {
@@ -188,11 +203,10 @@ void log_buffer_clear() {
 static int cmd_show(const struct shell *shell, size_t argc, char **argv) {
 	char line[CONFIG_LOG_BACKEND_RB_SLOT_SIZE];
 
-	uint32_t index = log_get_next_line(LOG_GET_FIRST, line);
-	while (index != LOG_GET_FIRST) {
+	for (bool end = log_get_next_line(true, line); !end; end = log_get_next_line(false, line)) {
 		shell_fprintf(shell, SHELL_NORMAL, "%s", line);
-		index = log_get_next_line(index, line);
-	};
+	}
+
 	return 0;
 }
 

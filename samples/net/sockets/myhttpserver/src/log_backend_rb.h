@@ -9,9 +9,7 @@ extern "C" {
 #define CONFIG_LOG_BACKEND_RB_MEM_SIZE 65536U
 #define CONFIG_LOG_BACKEND_RB_SLOT_SIZE 64U
 
-#define LOG_GET_FIRST 0xFFFFFFFF
-
-extern uint32_t log_get_next_line(uint32_t index, char line[CONFIG_LOG_BACKEND_RB_SLOT_SIZE]);
+extern bool log_get_next_line(bool begin, char line[CONFIG_LOG_BACKEND_RB_SLOT_SIZE]);
 extern void log_buffer_clear();
 
 #ifdef __cplusplus

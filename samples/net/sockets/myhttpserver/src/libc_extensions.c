@@ -14,7 +14,7 @@ LOG_MODULE_REGISTER(lib_extensions, LOG_LEVEL_DBG);
 
 #include "libc_extensions.h"
 
-#define FN_MISSING() LOG_DBG("[IMPLEMENTATION MISSING : %s]\n", __func__)
+#define FN_MISSING() LOG_DBG("[IMPLEMENTATION MISSING : %s]", __func__)
 
 int iscntrl(int c)
 {

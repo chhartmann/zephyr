@@ -189,12 +189,8 @@ static int get_log_handler(struct mg_connection *conn, void *cbdata)
 		  "Content-Type: text/plain\r\n"
 		  "Connection: close\r\n\r\n");
 
-	uint32_t index = log_get_next_line(LOG_GET_FIRST, line);
-	while (index != LOG_GET_FIRST) {
-		mg_printf(conn, line);
-		index = log_get_next_line(index, line);
-	};
-
+	for (bool end = log_get_next_line(true, line); !end; end = log_get_next_line(false, line)) {
+		mg_printf(conn, line);	}
 	return 200;
 }
 
