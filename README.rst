@@ -24,7 +24,7 @@ Known Issues
 
 * Telnet is not working with windows telnet. Only linux telnet is working at the moment.
 * The SNTP server is hardcoded in prj.conf.
-* The MAC address is currently read from 0x8100000, where it can be set directly with STM32CubeProgrammer.
+* The MAC address is currently read from 0x8100000 (hacked into gen_random_mac()).
 
 
 Building and Running
@@ -36,7 +36,7 @@ The bin-file can be flashed with drag-and-drop with the nucleo_h743zi2 virtual f
 
 When developing locally, development with zephyr and west works out-of-the-box
 
-* Build with: west bulid -b nucleo_h743zi
+* Build with: west build -b nucleo_h743zi
 * Flash with: west flash
 * Debug with: west debug
 * Debug with: west debugserver
