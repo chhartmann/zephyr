@@ -340,24 +340,24 @@ class CMakeCache:
         return iter(self._entries.values())
 
 
-class SanityCheckException(Exception):
+class TwisterException(Exception):
     pass
 
 
-class SanityRuntimeError(SanityCheckException):
+class TwisterRuntimeError(TwisterException):
     pass
 
 
-class ConfigurationError(SanityCheckException):
+class ConfigurationError(TwisterException):
     def __init__(self, cfile, message):
-        SanityCheckException.__init__(self, cfile + ": " + message)
+        TwisterException.__init__(self, cfile + ": " + message)
 
 
-class BuildError(SanityCheckException):
+class BuildError(TwisterException):
     pass
 
 
-class ExecutionError(SanityCheckException):
+class ExecutionError(TwisterException):
     pass
 
 
@@ -454,7 +454,10 @@ class BinaryHandler(Handler):
         # work.  Newer ninja's don't seem to pass SIGTERM down to the children
         # so we need to use try_kill_process_by_pid.
         for child in psutil.Process(proc.pid).children(recursive=True):
-            os.kill(child.pid, signal.SIGTERM)
+            try:
+                os.kill(child.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
         proc.terminate()
         # sleep for a while before attempting to kill
         time.sleep(0.5)
@@ -1219,7 +1222,7 @@ class SizeCalculator:
 
         try:
             if magic != b'\x7fELF':
-                raise SanityRuntimeError("%s is not an ELF binary" % filename)
+                raise TwisterRuntimeError("%s is not an ELF binary" % filename)
         except Exception as e:
             print(str(e))
             sys.exit(2)
@@ -1234,7 +1237,7 @@ class SizeCalculator:
             "utf-8").strip()
         try:
             if is_xip_output.endswith("no symbols"):
-                raise SanityRuntimeError("%s has no symbol information" % filename)
+                raise TwisterRuntimeError("%s has no symbol information" % filename)
         except Exception as e:
             print(str(e))
             sys.exit(2)
@@ -1330,12 +1333,12 @@ class SizeCalculator:
 
 
 
-class SanityConfigParser:
+class TwisterConfigParser:
     """Class to read test case files with semantic checking
     """
 
     def __init__(self, filename, schema):
-        """Instantiate a new SanityConfigParser object
+        """Instantiate a new TwisterConfigParser object
 
         @param filename Source .yaml file to read
         """
@@ -1496,7 +1499,7 @@ class Platform:
         self.filter_data = dict()
 
     def load(self, platform_file):
-        scp = SanityConfigParser(platform_file, self.platform_schema)
+        scp = TwisterConfigParser(platform_file, self.platform_schema)
         scp.load()
         data = scp.data
 
@@ -1605,7 +1608,7 @@ class TestCase(DisablePyTestCollectionMixin):
         unique = os.path.normpath(os.path.join(relative_tc_root, workdir, name))
         check = name.split(".")
         if len(check) < 2:
-            raise SanityCheckException(f"""bad test name '{name}' in {testcase_root}/{workdir}. \
+            raise TwisterException(f"""bad test name '{name}' in {testcase_root}/{workdir}. \
 Tests should reference the category and subsystem with a dot as a separator.
                     """
                     )
@@ -1683,7 +1686,7 @@ Tests should reference the category and subsystem with a dot as a separator.
                 _subcases, warnings = self.scan_file(filename)
                 if warnings:
                     logger.error("%s: %s" % (filename, warnings))
-                    raise SanityRuntimeError("%s: %s" % (filename, warnings))
+                    raise TwisterRuntimeError("%s: %s" % (filename, warnings))
                 if _subcases:
                     subcases += _subcases
             except ValueError as e:
@@ -2812,7 +2815,7 @@ class TestSuite(DisablePyTestCollectionMixin):
 
         try:
             if not toolchain:
-                raise SanityRuntimeError("E: Variable ZEPHYR_TOOLCHAIN_VARIANT is not defined")
+                raise TwisterRuntimeError("E: Variable ZEPHYR_TOOLCHAIN_VARIANT is not defined")
         except Exception as e:
             print(str(e))
             sys.exit(2)
@@ -2839,7 +2842,7 @@ class TestSuite(DisablePyTestCollectionMixin):
                 tc_path = os.path.join(dirpath, filename)
 
                 try:
-                    parsed_data = SanityConfigParser(tc_path, self.tc_schema)
+                    parsed_data = TwisterConfigParser(tc_path, self.tc_schema)
                     parsed_data.load()
 
                     tc_path = os.path.dirname(tc_path)
@@ -3239,7 +3242,7 @@ class TestSuite(DisablePyTestCollectionMixin):
 
         try:
             if not self.discards:
-                raise SanityRuntimeError("apply_filters() hasn't been run!")
+                raise TwisterRuntimeError("apply_filters() hasn't been run!")
         except Exception as e:
             logger.error(str(e))
             sys.exit(2)
@@ -3827,6 +3830,16 @@ class DUT(object):
         with self._counter.get_lock():
             self._counter.value = value
 
+    def to_dict(self):
+        d = {}
+        exclude = ['_available', '_counter', 'match']
+        v = vars(self)
+        for k in v.keys():
+            if k not in exclude and v[k]:
+                d[k] = v[k]
+        return d
+
+
     def __repr__(self):
         return f"<{self.platform} ({self.product}) on {self.serial}>"
 
@@ -3960,26 +3973,34 @@ class HardwareMap:
 
     def save(self, hwm_file):
         # use existing map
+        self.detected.sort(key=lambda x: x.serial or '')
         if os.path.exists(hwm_file):
             with open(hwm_file, 'r') as yaml_file:
                 hwm = yaml.load(yaml_file, Loader=SafeLoader)
-                hwm.sort(key=lambda x: x['serial'] or '')
+                if hwm:
+                    hwm.sort(key=lambda x: x['serial'] or '')
 
-                # disconnect everything
-                for h in hwm:
-                    h['connected'] = False
-                    h['serial'] = None
-
-                self.detected.sort(key=lambda x: x.serial or '')
-                for _detected in self.detected:
+                    # disconnect everything
                     for h in hwm:
-                        if _detected.id == h['id'] and _detected.product == h['product'] and not h['connected'] and not _detected.match:
-                            h['connected'] = True
-                            h['serial'] = _detected.serial
-                            _detected.match = True
+                        h['connected'] = False
+                        h['serial'] = None
 
-                new = list(filter(lambda d: not d.match, self.detected))
-                hwm = hwm + new
+                    for _detected in self.detected:
+                        for h in hwm:
+                            if _detected.id == h['id'] and _detected.product == h['product'] and not _detected.match:
+                                h['connected'] = True
+                                h['serial'] = _detected.serial
+                                _detected.match = True
+
+                new_duts = list(filter(lambda d: not d.match, self.detected))
+                new = []
+                for d in new_duts:
+                    new.append(d.to_dict())
+
+                if hwm:
+                    hwm = hwm + new
+                else:
+                    hwm = new
 
             with open(hwm_file, 'w') as yaml_file:
                 yaml.dump(hwm, yaml_file, Dumper=Dumper, default_flow_style=False)
