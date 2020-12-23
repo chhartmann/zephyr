@@ -30,23 +30,6 @@
 	UTIL_AND(DT_NODE_HAS_PROP(node, local_mac_address),\
 			(!NODE_MAC_ADDR_NULL(node)))
 
-static inline void gen_random_mac(uint8_t *mac_addr, uint8_t b0, uint8_t b1, uint8_t b2)
-{
-	uint32_t entropy;
-
-	//entropy = sys_rand32_get();
-	entropy = *((uint32_t*)(0x8100000));
-
-	mac_addr[0] = b0;
-	mac_addr[1] = b1;
-	mac_addr[2] = b2;
-
-	/* Set MAC address locally administered, unicast (LAA) */
-	mac_addr[0] |= 0x02;
-
-	mac_addr[3] = (entropy >> 16) & 0xff;
-	mac_addr[4] = (entropy >>  8) & 0xff;
-	mac_addr[5] = (entropy >>  0) & 0xff;
-}
+extern void gen_random_mac(uint8_t *mac_addr, uint8_t b0, uint8_t b1, uint8_t b2);
 
 #endif /* ZEPHYR_DRIVERS_ETHERNET_ETH_H_ */

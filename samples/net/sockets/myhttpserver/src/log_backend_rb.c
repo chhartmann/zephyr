@@ -216,8 +216,8 @@ static int cmd_clear(const struct shell *shell, size_t argc, char **argv) {
 }
 
 SHELL_STATIC_SUBCMD_SET_CREATE(sub_ramlog,
-	SHELL_CMD(show, NULL, "Show whole log\n", cmd_show),
-	SHELL_CMD(clear, NULL, "Clear whole log\n", cmd_clear),
+	SHELL_CMD(show, NULL, "Show whole log", cmd_show),
+	SHELL_CMD(clear, NULL, "Clear whole log", cmd_clear),
 	SHELL_SUBCMD_SET_END
 );
 

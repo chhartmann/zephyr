@@ -17,14 +17,15 @@ LOG_MODULE_REGISTER(myhttpserver, LOG_LEVEL_DBG);
 #include <net/net_context.h>
 #include <net/net_mgmt.h>
 #include <net/ethernet_mgmt.h>
-
+#include <net/sntp.h>
 #include <drivers/gpio.h>
 
-#include <zephyr.h>
 #include <posix/pthread.h>
+#include <posix/time.h>
 #include <data/json.h>
 
 #include "log_backend_rb.h"
+#include "mysettings.h"
 #include "civetweb.h"
 #include "cJSON.h"
 
@@ -35,8 +36,6 @@ LOG_MODULE_REGISTER(myhttpserver, LOG_LEVEL_DBG);
 
 /* Use samllest possible value of 1024 (see the line 18619 of civetweb.c) */
 #define MAX_REQUEST_SIZE_BYTES			1024
-
-extern int net_init_clock_via_sntp(void);
 
 K_THREAD_STACK_DEFINE(civetweb_stack, CIVETWEB_MAIN_THREAD_STACK_SIZE);
 
@@ -53,8 +52,8 @@ void log_proxy(const char* fmt, ...) {
 	va_end(myargs);
 }
 
-
 static struct net_mgmt_event_callback mgmt_cb;
+static struct k_delayed_work sntp_timer;
 
 struct output_struct {
 	const char* json_name;
@@ -190,7 +189,8 @@ static int get_log_handler(struct mg_connection *conn, void *cbdata)
 		  "Connection: close\r\n\r\n");
 
 	for (bool end = log_get_next_line(true, line); !end; end = log_get_next_line(false, line)) {
-		mg_printf(conn, line);	}
+		mg_printf(conn, line);	
+	}
 	return 200;
 }
 
@@ -245,7 +245,24 @@ static void *main_pthread(void *arg)
 	return 0;
 }
 
-static void handler(struct net_mgmt_event_callback *cb,
+static void get_time_from_sntp(struct k_work *work) {
+	struct sntp_time ts;
+	struct timespec tspec;
+	int res = sntp_simple(get_settings()->sntp_server, 3000, &ts);
+
+	if (res < 0) {
+		LOG_ERR("Cannot set time using SNTP");
+		return;
+	}
+
+	tspec.tv_sec = ts.seconds;
+	tspec.tv_nsec = ((uint64_t)ts.fraction * (1000 * 1000 * 1000)) >> 32;
+	res = clock_settime(CLOCK_REALTIME, &tspec);
+
+	LOG_INF("Setup clock via sntp");
+}
+
+static void net_mgmt_event_handler(struct net_mgmt_event_callback *cb,
 		    uint32_t mgmt_event,
 		    struct net_if *iface)
 {
@@ -253,14 +270,15 @@ static void handler(struct net_mgmt_event_callback *cb,
 		return;
 	}
 
-	LOG_INF("Setup clock via sntp");
-	net_init_clock_via_sntp();
+	// run it from work queue because task of network management thread is very small
+	k_delayed_work_init(&sntp_timer, get_time_from_sntp);
+	k_delayed_work_submit(&sntp_timer, K_NO_WAIT);
 }
 
 
 void main(void)
 {
-	net_mgmt_init_event_callback(&mgmt_cb, handler,
+	net_mgmt_init_event_callback(&mgmt_cb, net_mgmt_event_handler,
 				     NET_EVENT_IPV4_ADDR_ADD);
 	net_mgmt_add_event_callback(&mgmt_cb);
 
@@ -276,5 +294,4 @@ void main(void)
 
 	(void)pthread_create(&civetweb_thread, &civetweb_attr,
 			     &main_pthread, 0);
-
 }

@@ -5,4 +5,4 @@ cmake_minimum_required(VERSION 3.13.1)
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(civetweb)
 
-target_sources(app PRIVATE src/main.c src/libc_extensions.c src/cJSON.c src/cJSON_Utils.c src/log_backend_rb.c)
+target_sources(app PRIVATE src/main.c src/libc_extensions.c src/cJSON.c src/cJSON_Utils.c src/log_backend_rb.c src/mysettings.c)

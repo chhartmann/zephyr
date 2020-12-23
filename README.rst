@@ -5,9 +5,6 @@ Overview
 ********
 This is an extention of the existing webserver example customized for nucleo_h743zi2 board:
 
-=> sntp server in pfj.conf hardcoded)
-
-
 * Telnet and serial shell are enabled with GPIO shell and date shell configured.
 * The ringbuffer log, which was part in earlier zephyr version, has been adapted. Immediate logging is activated.
 * It uses tha last 64Kbyte of the RAM. It can be printed with a shell command similar to dmesg.
@@ -19,12 +16,18 @@ This is more a proof of concept than a real project.
 Generally it is clearly not a good idea to base the example on a fork of zephyr instead of using a separate repository the example.
 There werte some minor changes in some files of zephyr necessary to get this working as it is.
 
+Settings
+********
+The settings can be changed with a shell command. They are stored in flash at 0x81F0000. The following parameters can be set:
+
+* SNTP server
+* Syslogd server (syslogd is not yet activated)
+* MAC address
+
 Known Issues
 ************
 
 * Telnet is not working with windows telnet. Only linux telnet is working at the moment.
-* The SNTP server is hardcoded in prj.conf.
-* The MAC address is currently read from 0x8100000 (hacked into gen_random_mac()).
 
 
 Building and Running
