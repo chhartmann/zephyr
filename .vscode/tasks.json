@@ -20,7 +20,7 @@
 			}
 		},
 		{
-			"label": "west flash --runner stm32cubeprogrammer",
+			"label": "west flash",
 			"type": "shell",
 			"group": "build",
 			"command": "west",

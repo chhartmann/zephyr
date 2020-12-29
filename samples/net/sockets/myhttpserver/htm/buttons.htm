@@ -1,0 +1,31 @@
+<!--#include "civetweb.h" -->
+
+<!--extern void send_ok(struct mg_connection *conn); -->
+
+<!--int button_handler(struct mg_connection *conn, void *cbdata) { -->
+<!--send_ok(conn);-->
+<html lang="en"><head>
+   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+   <title>Hello, world!</title></head>
+   <div class="container"><div class="row">
+   <div class="col-sm"></div>
+   <div class="col-sm"><div class="btn-toolbar">
+<!--//TODO: generate from output list-->
+   <input class="btn btn-primary m-1" value="led1"/>
+   <input class="btn btn-primary m-1" value="led2"/>
+   <input class="btn btn-primary m-1" value="led3"/>
+   </div></div>                       
+   <div class="col-sm"></div>
+   </div></div>
+   <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+   <script>
+   $(document).ready(function(){
+     $(".btn").on("mousedown", function(e) { $.post("/set", `{"${e.target.value}":1}`); });
+     $(".btn").on("mouseup", function(e) { $.post("/set", `{"${e.target.value}":0}`); });
+   });
+   </script>
+   </body>
+   <!--return 200;-->
+   <!--}-->

@@ -37,6 +37,9 @@ LOG_MODULE_REGISTER(myhttpserver, LOG_LEVEL_DBG);
 /* Use samllest possible value of 1024 (see the line 18619 of civetweb.c) */
 #define MAX_REQUEST_SIZE_BYTES			1024
 
+// generated from html files
+extern int button_handler(struct mg_connection *conn, void *cbdata);
+
 K_THREAD_STACK_DEFINE(civetweb_stack, CIVETWEB_MAIN_THREAD_STACK_SIZE);
 
 void log_proxy(const char* fmt, ...) {
@@ -136,6 +139,7 @@ void send_error(struct mg_connection *conn, const char *msg) {
 		  "Content-Type: text/html\r\n"
 		  "Connection: close\r\n\r\n");
 	mg_printf(conn, msg);
+	LOG_INF("HTTP error: %s", msg);
 }
 
 static int set_output_handler(struct mg_connection *conn, void *cbdata) {
@@ -155,6 +159,7 @@ static int set_output_handler(struct mg_connection *conn, void *cbdata) {
 	}
 
 	buffer[dlen] = 0;	
+	LOG_INF("HTTP params: %s", buffer);
 
 	obj = cJSON_Parse(buffer);
 	if (obj == NULL) {
@@ -200,11 +205,6 @@ static int hello_world_handler(struct mg_connection *conn, void *cbdata)
 	send_ok(conn);
 	mg_printf(conn, "<html><body>");
 	mg_printf(conn, "<h3>Hello World from Zephyr!</h3>");
-	mg_printf(conn, "See also:\n");
-	mg_printf(conn, "<ul>\n");
-	mg_printf(conn, "<li><a href=/info>system info</a></li>\n");
-	mg_printf(conn, "<li><a href=/history>cookie demo</a></li>\n");
-	mg_printf(conn, "</ul>\n");
 	mg_printf(conn, "</body></html>\n");
 
 	return 200;
@@ -239,6 +239,7 @@ static void *main_pthread(void *arg)
 
 	mg_set_request_handler(ctx, "/log$", get_log_handler, 0);
 	mg_set_request_handler(ctx, "/set$", set_output_handler, 0);
+	mg_set_request_handler(ctx, "/buttons", button_handler, 0);
 	mg_set_request_handler(ctx, "/", hello_world_handler, 0);
 
 	LOG_INF("main_pthread end");
