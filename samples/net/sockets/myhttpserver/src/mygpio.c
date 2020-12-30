@@ -23,6 +23,7 @@ void setup_output(const uint32_t index,
 		outputs[index].dev = device_get_binding(port);
 		outputs[index].index = pin_index;
 		outputs[index].value = value;
+		outputs[index].value = value;
 
 		if (outputs[index].dev == NULL) {
 			LOG_ERR("Failed to get device for %s\n", outputs[index].json_name);

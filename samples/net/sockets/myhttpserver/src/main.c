@@ -37,6 +37,7 @@ LOG_MODULE_REGISTER(myhttpserver, LOG_LEVEL_DBG);
 
 // generated from html files
 extern int button_handler(struct mg_connection *conn, void *cbdata);
+extern int switches_handler(struct mg_connection *conn, void *cbdata);
 
 K_THREAD_STACK_DEFINE(civetweb_stack, CIVETWEB_MAIN_THREAD_STACK_SIZE);
 
@@ -199,6 +200,7 @@ static void *main_pthread(void *arg)
 	mg_set_request_handler(ctx, "/get$", get_output_handler, 0);
 	mg_set_request_handler(ctx, "/set$", set_output_handler, 0);
 	mg_set_request_handler(ctx, "/buttons$", button_handler, 0);
+	mg_set_request_handler(ctx, "/switches$", switches_handler, 0);
 	mg_set_request_handler(ctx, "/$", hello_world_handler, 0);
 	mg_set_request_handler(ctx, "/", file_not_found_handler, 0);
 

@@ -13,6 +13,7 @@ struct output_struct {
 	const struct device *dev;
 	uint8_t index;
 	uint8_t value;
+   uint8_t default_value;
 	time_t time;
 };
 
