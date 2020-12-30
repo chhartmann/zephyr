@@ -116,6 +116,22 @@ static int set_output_handler(struct mg_connection *conn, void *cbdata) {
 	return 200;
 }
 
+static int set_output_default_handler(struct mg_connection *conn, void *cbdata) {
+	const struct mg_request_info *ri = mg_get_request_info(conn);
+
+	if (0 != strcmp(ri->request_method, "POST")) {
+		send_error(conn, "Only POST requests are allowed\n");
+		return 400;
+	}
+
+	for (uint32_t i = 0; i < NUM_OUTPUTS; i++) {
+		set_output(i, get_output(i)->default_value);
+	}
+
+	send_ok(conn);
+	return 200;
+}
+
 static int get_output_handler(struct mg_connection *conn, void *cbdata)
 {
 	mg_printf(conn,
@@ -199,6 +215,7 @@ static void *main_pthread(void *arg)
 	mg_set_request_handler(ctx, "/log$", get_log_handler, 0);
 	mg_set_request_handler(ctx, "/get$", get_output_handler, 0);
 	mg_set_request_handler(ctx, "/set$", set_output_handler, 0);
+	mg_set_request_handler(ctx, "/set_default$", set_output_default_handler, 0);
 	mg_set_request_handler(ctx, "/buttons$", button_handler, 0);
 	mg_set_request_handler(ctx, "/switches$", switches_handler, 0);
 	mg_set_request_handler(ctx, "/$", hello_world_handler, 0);

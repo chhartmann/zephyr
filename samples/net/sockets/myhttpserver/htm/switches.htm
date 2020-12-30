@@ -15,7 +15,9 @@
    <div class="container"><div class="row">
    <div class="col-sm"></div>
    <div class="col-sm">
-   
+
+   <input id="default_button" class="btn btn-primary m-1" value="Set all to default"/>
+
    <!--for (uint32_t i = 0; i < NUM_OUTPUTS; i++) {-->
       <div class="form-check form-switch">
       <!--const char * const name = get_output(i)->json_name; -->
@@ -33,6 +35,10 @@
          var id = $(this).prop("id");
          var val = $(this).prop("checked") ? 1 : 0;
          $.post("/set", `{"${id}":${val}}`); 
+      });
+      $("#default_button").click(function () {
+         $.post("/set_default"); 
+         location.reload();
       });
    });
    </script>

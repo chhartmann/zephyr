@@ -21,6 +21,7 @@ struct output_struct {
 
 
 extern void init_outputs();
+extern void set_output(uint32_t index, uint8_t value);
 extern bool set_output_by_name(const char * const json_name, const uint8_t value);
 extern struct output_struct const * const get_output(uint32_t index);
 
