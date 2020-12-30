@@ -14,4 +14,4 @@ add_custom_command(
    COMMENT "Generating code for buttons.htm."
 )
 
-target_sources(app PRIVATE src/main.c src/libc_extensions.c src/cJSON.c src/cJSON_Utils.c src/log_backend_rb.c src/mysettings.c htm/buttons.c)
+target_sources(app PRIVATE src/main.c src/libc_extensions.c src/cJSON.c src/cJSON_Utils.c src/log_backend_rb.c src/mysettings.c src/mygpio.c htm/buttons.c)

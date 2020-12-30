@@ -8,7 +8,6 @@
 LOG_MODULE_REGISTER(myhttpserver, LOG_LEVEL_DBG);
 
 #include <zephyr.h>
-#include <linker/sections.h>
 #include <errno.h>
 #include <stdio.h>
 
@@ -18,15 +17,14 @@ LOG_MODULE_REGISTER(myhttpserver, LOG_LEVEL_DBG);
 #include <net/net_mgmt.h>
 #include <net/ethernet_mgmt.h>
 #include <net/sntp.h>
-#include <drivers/gpio.h>
 
 #include <posix/pthread.h>
 #include <posix/time.h>
-#include <data/json.h>
+#include <civetweb.h>
 
 #include "log_backend_rb.h"
 #include "mysettings.h"
-#include "civetweb.h"
+#include "mygpio.h"
 #include "cJSON.h"
 
 #define HTTP_PORT	80
@@ -58,73 +56,6 @@ void log_proxy(const char* fmt, ...) {
 static struct net_mgmt_event_callback mgmt_cb;
 static struct k_delayed_work sntp_timer;
 
-struct output_struct {
-	const char* json_name;
-	const struct device *dev;
-	uint8_t index;
-	uint8_t value;
-	time_t time;
-};
-
-#define NUM_OUTPUTS 3
-
-struct output_struct outputs[NUM_OUTPUTS] = {0};
-
-void set_output(uint32_t index, uint8_t value) {
-	__ASSERT(index < NUM_OUTPUTS, "invalid index for set_output");
-	if (gpio_pin_set(outputs[index].dev, outputs[index].index, value)) {
-		LOG_ERR("Failed to set output\n");
-	}
-	outputs[index].value = value;
-}
-
-void setup_output(const uint32_t index, 
-                  const char * const json_name, 
-						const char * const port, 
-						const uint8_t pin_index, 
-						const uint8_t value) {
-	if (index < NUM_OUTPUTS) {
-		outputs[index].json_name = json_name;
-		outputs[index].dev = device_get_binding(port);
-		outputs[index].index = pin_index;
-		outputs[index].value = value;
-
-		if (outputs[index].dev == NULL) {
-			LOG_ERR("Failed to get device for %s\n", outputs[index].json_name);
-		} else if (0 != gpio_pin_configure(outputs[index].dev, outputs[index].index, GPIO_OUTPUT)) {
-			LOG_ERR("Failed to configure output\n");
-		} else {
-			set_output(index, value);
-		}
-		
-		 if (gpio_pin_set(outputs[index].dev, outputs[index].index, outputs[index].value)) {
-			LOG_ERR("Failed to set output\n");
-		}
-	} else {
-		LOG_ERR("Invalid index for output: %s\n", json_name);
-	}
-}
-
-void init_outputs() {
-	LOG_INF("Initializing GPIOs");
-	uint32_t i = 0;
-	setup_output(i++, "led1", "GPIOB", 0, 0);
-	setup_output(i++, "led2", "GPIOE", 1, 0);
-	setup_output(i++, "led3", "GPIOB", 14, 0);
-	__ASSERT(i == NUM_OUTPUTS, "Setup %d outputs instead of %d\n", i, NUM_OUTPUTS);
-}
-
-bool set_output_by_name(const char * const json_name, const uint8_t value) {
-	bool found = false;
-	for (uint32_t i = 0; i < NUM_OUTPUTS; i++) {
-		if (0 == strcmp(outputs[i].json_name, json_name)) {
-			set_output(i, value);
-			break;
-		}
-	}
-	return found;
-}
-
 void send_ok(struct mg_connection *conn) {
 	mg_printf(conn,
 		  "HTTP/1.1 200 OK\r\n"
@@ -138,7 +69,7 @@ void send_error(struct mg_connection *conn, const char *msg) {
 		  "HTTP/1.1 400 Bad Request\r\n"
 		  "Content-Type: text/html\r\n"
 		  "Connection: close\r\n\r\n");
-	mg_printf(conn, msg);
+	mg_printf(conn, "%s", msg);
 	LOG_INF("HTTP error: %s", msg);
 }
 
@@ -194,7 +125,7 @@ static int get_log_handler(struct mg_connection *conn, void *cbdata)
 		  "Connection: close\r\n\r\n");
 
 	for (bool end = log_get_next_line(true, line); !end; end = log_get_next_line(false, line)) {
-		mg_printf(conn, line);	
+		mg_printf(conn, "%s", line);	
 	}
 	return 200;
 }
@@ -204,10 +135,21 @@ static int hello_world_handler(struct mg_connection *conn, void *cbdata)
 {
 	send_ok(conn);
 	mg_printf(conn, "<html><body>");
-	mg_printf(conn, "<h3>Hello World from Zephyr!</h3>");
+	mg_printf(conn, "<h3>Hello World from myhttpserver!</h3>");
 	mg_printf(conn, "</body></html>\n");
 
 	return 200;
+}
+
+static int file_not_found_handler(struct mg_connection *conn, void *cbdata)
+{
+	mg_printf(conn,
+		  "HTTP/1.1 404 Not Found\r\n"
+		  "Content-Type: text/html\r\n"
+		  "Connection: close\r\n\r\n");
+	LOG_INF("Requested page not available");
+
+	return 404;
 }
 
 static void *main_pthread(void *arg)
@@ -239,8 +181,9 @@ static void *main_pthread(void *arg)
 
 	mg_set_request_handler(ctx, "/log$", get_log_handler, 0);
 	mg_set_request_handler(ctx, "/set$", set_output_handler, 0);
-	mg_set_request_handler(ctx, "/buttons", button_handler, 0);
-	mg_set_request_handler(ctx, "/", hello_world_handler, 0);
+	mg_set_request_handler(ctx, "/buttons$", button_handler, 0);
+	mg_set_request_handler(ctx, "/$", hello_world_handler, 0);
+	mg_set_request_handler(ctx, "/", file_not_found_handler, 0);
 
 	LOG_INF("main_pthread end");
 	return 0;
@@ -275,7 +218,6 @@ static void net_mgmt_event_handler(struct net_mgmt_event_callback *cb,
 	k_delayed_work_init(&sntp_timer, get_time_from_sntp);
 	k_delayed_work_submit(&sntp_timer, K_NO_WAIT);
 }
-
 
 void main(void)
 {
