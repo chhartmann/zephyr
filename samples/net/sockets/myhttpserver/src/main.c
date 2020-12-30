@@ -115,6 +115,22 @@ static int set_output_handler(struct mg_connection *conn, void *cbdata) {
 	return 200;
 }
 
+static int get_output_handler(struct mg_connection *conn, void *cbdata)
+{
+	mg_printf(conn,
+		  "HTTP/1.1 200 OK\r\n"
+		  "Content-Type: text/plain\r\n"
+		  "Connection: close\r\n\r\n");
+
+	mg_printf(conn, "{");
+	for (uint32_t i = 0; i < NUM_OUTPUTS; i++) {
+		mg_printf(conn, "%s \"%s\":%d", i == 0 ? "" : ",", get_output(i)->json_name, get_output(i)->value);		
+	}
+	mg_printf(conn, "}");
+
+	return 200;
+}
+
 static int get_log_handler(struct mg_connection *conn, void *cbdata)
 {
 	char line[CONFIG_LOG_BACKEND_RB_SLOT_SIZE];
@@ -180,6 +196,7 @@ static void *main_pthread(void *arg)
 	}
 
 	mg_set_request_handler(ctx, "/log$", get_log_handler, 0);
+	mg_set_request_handler(ctx, "/get$", get_output_handler, 0);
 	mg_set_request_handler(ctx, "/set$", set_output_handler, 0);
 	mg_set_request_handler(ctx, "/buttons$", button_handler, 0);
 	mg_set_request_handler(ctx, "/$", hello_world_handler, 0);

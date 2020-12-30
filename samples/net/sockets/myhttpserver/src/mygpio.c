@@ -49,7 +49,7 @@ void init_outputs() {
 	__ASSERT(i == NUM_OUTPUTS, "Setup %d outputs instead of %d\n", i, NUM_OUTPUTS);
 }
 
-struct output_struct * get_output(uint32_t index) {
+struct output_struct const * const get_output(uint32_t index) {
    return &outputs[index];
 }
 

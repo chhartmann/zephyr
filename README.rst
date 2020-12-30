@@ -49,4 +49,5 @@ HTTP Connections Points
 
 * /log - Read current log as text.
 * /set - Send HTTP POST to control outputs, e.g. curl -d '{ "led1": 0,"led2": 0,"led3": 1 }' http://192.168.0.133/set
+* /get - Get json string with all outputs and their state
 * /buttons - Show a html site with buttons to control the outputs. The website uses /set to control the outputs.
