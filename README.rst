@@ -24,6 +24,8 @@ The settings can be changed with a shell command. They are stored in flash at 0x
 * Syslogd server (syslogd is not yet activated)
 * MAC address
 
+When settings have been changed, a reboot is required. This can be accomplished with the shell command 'reboot'.
+
 Known Issues
 ************
 
