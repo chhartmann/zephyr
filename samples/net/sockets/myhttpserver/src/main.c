@@ -70,7 +70,7 @@ void send_error(struct mg_connection *conn, const char *msg) {
 		  "HTTP/1.1 400 Bad Request\r\n"
 		  "Content-Type: text/html\r\n"
 		  "Connection: close\r\n\r\n");
-	mg_printf(conn, "%s", msg);
+	mg_printf(conn, "%s\n", msg);
 	LOG_INF("HTTP error: %s", msg);
 }
 
@@ -81,12 +81,12 @@ static int set_output_handler(struct mg_connection *conn, void *cbdata) {
 	cJSON *obj, *elem;
 
 	if (0 != strcmp(ri->request_method, "POST")) {
-		send_error(conn, "Only POST requests are allowed\n");
+		send_error(conn, "Only POST requests are allowed");
 		return 400;
 	}
 
 	if ((dlen < 1) || (dlen >= sizeof(buffer))) {
-		send_error(conn, "Invalid data size (no or exceeded maximum length)\n");
+		send_error(conn, "Invalid data size (no or exceeded maximum length)");
 		return 400;
 	}
 
@@ -95,19 +95,56 @@ static int set_output_handler(struct mg_connection *conn, void *cbdata) {
 
 	obj = cJSON_Parse(buffer);
 	if (obj == NULL) {
-		send_error(conn, "Json parse error\n");
+		send_error(conn, "Json parse error");
 		return 400;
 	}
 
+	int64_t timer = 0;
 	char *current_key = NULL;
+
+	bool schema_ok = true;
 	cJSON_ArrayForEach(elem, obj)
 	{
 		current_key = elem->string;
 		if (current_key != NULL)
 		{
-			// TODO: check type of value
-			// TODO: check return value (output exists)
-			set_output_by_name(current_key, elem->valueint);
+			if (elem->type != cJSON_Number) {
+				schema_ok = false;
+				LOG_INF("error: element type for %s is not a number", current_key);	
+			}
+			if (0 == strcmp(current_key, "delay")) {
+				if (elem->valueint >= 100 && elem->valueint <= 5000) {
+					timer = elem->valueint;
+				} else {
+					schema_ok = false;
+					LOG_INF("error: delay has to be in the range of [100..5000]");
+				}
+			} else if (get_output_by_name(current_key) >= 0) {
+				if (elem->valueint != 0 && elem->valueint != 1) {
+					schema_ok = false;
+					LOG_INF("error: output value for %s is not 0 or 1", current_key);
+				}
+			} else {
+				schema_ok = false;
+				LOG_INF("error: output '%s' does not exist", current_key);
+			}
+		} else {
+			schema_ok = false;
+			LOG_INF("error: unexpected element in json object");	
+		}
+	}
+
+	if (!schema_ok) {
+		send_error(conn, "error: json object deviates from schema");
+		return 400;
+	}
+
+	// schema is ok, so set outputs now
+	cJSON_ArrayForEach(elem, obj)
+	{
+		current_key = elem->string;
+		if (0 != strcmp(current_key, "delay")) {
+			(void)set_output_by_name(current_key, elem->valueint, timer);
 		}
 	}
 
@@ -120,12 +157,12 @@ static int set_output_default_handler(struct mg_connection *conn, void *cbdata) 
 	const struct mg_request_info *ri = mg_get_request_info(conn);
 
 	if (0 != strcmp(ri->request_method, "POST")) {
-		send_error(conn, "Only POST requests are allowed\n");
+		send_error(conn, "Only POST requests are allowed");
 		return 400;
 	}
 
 	for (uint32_t i = 0; i < NUM_OUTPUTS; i++) {
-		set_output(i, get_output(i)->default_value);
+		set_output(i, get_output(i)->default_value, 0);
 	}
 
 	send_ok(conn);
@@ -221,7 +258,11 @@ static void *main_pthread(void *arg)
 	mg_set_request_handler(ctx, "/$", hello_world_handler, 0);
 	mg_set_request_handler(ctx, "/", file_not_found_handler, 0);
 
-	LOG_INF("main_pthread end");
+	// now check output timeouts
+	while (true) {
+		check_output_timer();
+		k_msleep(100);
+	}
 	return 0;
 }
 
