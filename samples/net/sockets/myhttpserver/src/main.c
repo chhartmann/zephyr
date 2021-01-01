@@ -38,6 +38,7 @@ LOG_MODULE_REGISTER(myhttpserver, LOG_LEVEL_DBG);
 // generated from html files
 extern int button_handler(struct mg_connection *conn, void *cbdata);
 extern int switches_handler(struct mg_connection *conn, void *cbdata);
+extern int index_handler(struct mg_connection *conn, void *cbdata);
 
 K_THREAD_STACK_DEFINE(civetweb_stack, CIVETWEB_MAIN_THREAD_STACK_SIZE);
 
@@ -57,11 +58,11 @@ void log_proxy(const char* fmt, ...) {
 static struct net_mgmt_event_callback mgmt_cb;
 static struct k_delayed_work sntp_timer;
 
-void send_ok(struct mg_connection *conn) {
+void send_ok(struct mg_connection *conn, const char* mime_type) {
 	mg_printf(conn,
 		  "HTTP/1.1 200 OK\r\n"
-		  "Content-Type: text/html\r\n"
-		  "Connection: close\r\n\r\n");
+		  "Content-Type: %s\r\n"
+		  "Connection: close\r\n\r\n", mime_type);
 }
 
 
@@ -149,7 +150,7 @@ static int set_output_handler(struct mg_connection *conn, void *cbdata) {
 	}
 
 	cJSON_Delete(obj);
-	send_ok(conn);
+	send_ok(conn, "text/plain");
 	return 200;
 }
 
@@ -165,16 +166,13 @@ static int set_output_default_handler(struct mg_connection *conn, void *cbdata) 
 		set_output(i, get_output(i)->default_value, 0);
 	}
 
-	send_ok(conn);
+	send_ok(conn, "text/plain");
 	return 200;
 }
 
 static int get_output_handler(struct mg_connection *conn, void *cbdata)
 {
-	mg_printf(conn,
-		  "HTTP/1.1 200 OK\r\n"
-		  "Content-Type: text/plain\r\n"
-		  "Connection: close\r\n\r\n");
+	send_ok(conn, "text/plain");
 
 	mg_printf(conn, "{");
 	for (uint32_t i = 0; i < NUM_OUTPUTS; i++) {
@@ -189,25 +187,11 @@ static int get_log_handler(struct mg_connection *conn, void *cbdata)
 {
 	char line[CONFIG_LOG_BACKEND_RB_SLOT_SIZE];
 
-	mg_printf(conn,
-		  "HTTP/1.1 200 OK\r\n"
-		  "Content-Type: text/plain\r\n"
-		  "Connection: close\r\n\r\n");
+	send_ok(conn, "text/plain");
 
 	for (bool end = log_get_next_line(true, line); !end; end = log_get_next_line(false, line)) {
 		mg_printf(conn, "%s", line);	
 	}
-	return 200;
-}
-
-
-static int hello_world_handler(struct mg_connection *conn, void *cbdata)
-{
-	send_ok(conn);
-	mg_printf(conn, "<html><body>");
-	mg_printf(conn, "<h3>Hello World from myhttpserver!</h3>");
-	mg_printf(conn, "</body></html>\n");
-
 	return 200;
 }
 
@@ -255,8 +239,8 @@ static void *main_pthread(void *arg)
 	mg_set_request_handler(ctx, "/set_default$", set_output_default_handler, 0);
 	mg_set_request_handler(ctx, "/buttons$", button_handler, 0);
 	mg_set_request_handler(ctx, "/switches$", switches_handler, 0);
-	mg_set_request_handler(ctx, "/$", hello_world_handler, 0);
-	mg_set_request_handler(ctx, "/", file_not_found_handler, 0);
+	mg_set_request_handler(ctx, "/favicon.ico", file_not_found_handler, 0);
+	mg_set_request_handler(ctx, "/", index_handler, 0);
 
 	// now check output timeouts
 	while (true) {

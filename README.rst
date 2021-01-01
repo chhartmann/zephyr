@@ -49,9 +49,7 @@ When developing locally, development with zephyr and west works out-of-the-box
 HTTP Connections Points
 ***********************
 
-* /log - Read current log as text.
+* /index - HTML start page with links to all other pages.
 * /set - Send HTTP POST to control outputs with an optional delay value meaning the outputs are toggled back after the delay time.  e.g. curl -d '{ "delay":2000, "led1":0, "led3":1 }' http://192.168.0.133/set
 * /set_default - Send HTTP POST to reset all outputs. Used by website /switches
 * /get - Get json string with all outputs and their state
-* /buttons - Show a html site with buttons to control the outputs. The website uses /set to control the outputs.
-* /switches - Show a html site with switches to control the outputs. The website uses /set to control the outputs.
