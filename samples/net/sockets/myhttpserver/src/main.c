@@ -39,8 +39,27 @@ LOG_MODULE_REGISTER(myhttpserver, LOG_LEVEL_DBG);
 // generated from html files
 extern int button_handler(struct mg_connection *conn, void *cbdata);
 extern int switches_handler(struct mg_connection *conn, void *cbdata);
-extern int webshell_handler(struct mg_connection *conn, void *cbdata);
-extern int index_handler(struct mg_connection *conn, void *cbdata);
+
+// pseude file system for static html files
+struct file_def {
+	const char path[128];
+	const char mime[32];
+	const char* data;
+	size_t len;
+};
+
+static const char index_htm[] = {
+	#include "../htm/index.htm.inc"
+};
+
+static const char webshell_htm[] = {
+	#include "../htm/webshell.htm.inc"
+};
+
+struct file_def file_system[] = {
+	{.path = "/", .mime = "text/html", .data = index_htm, .len = sizeof(index_htm)},
+	{.path = "/webshell", .mime = "text/html", .data = webshell_htm, .len = sizeof(webshell_htm)},
+};
 
 K_THREAD_STACK_DEFINE(civetweb_stack, CIVETWEB_MAIN_THREAD_STACK_SIZE);
 
@@ -232,8 +251,19 @@ static int get_log_handler(struct mg_connection *conn, void *cbdata)
 	return 200;
 }
 
-static int file_not_found_handler(struct mg_connection *conn, void *cbdata)
+static int file_system_handler(struct mg_connection *conn, void *cbdata)
 {
+	const struct mg_request_info *ri = mg_get_request_info(conn);
+
+	for (uint32_t i = 0; i < sizeof(file_system)/sizeof(file_system)[0]; i++) {
+		printf("found %s\n", file_system[i].path);
+		if (0 == strcmp(ri->request_uri, file_system[i].path)) {
+			send_ok(conn, file_system[i].mime);
+			mg_write(conn, file_system[i].data, file_system[i].len);
+			return 200;
+		}
+	}
+
 	mg_printf(conn,
 		  "HTTP/1.1 404 Not Found\r\n"
 		  "Content-Type: text/html\r\n"
@@ -272,14 +302,12 @@ static void *main_pthread(void *arg)
 
 	mg_set_request_handler(ctx, "/log$", get_log_handler, 0);
 	mg_set_request_handler(ctx, "/shell$", webshell_cmd_handler, 0);
-	mg_set_request_handler(ctx, "/webshell$", webshell_handler, 0);
 	mg_set_request_handler(ctx, "/get$", get_output_handler, 0);
 	mg_set_request_handler(ctx, "/set$", set_output_handler, 0);
 	mg_set_request_handler(ctx, "/set_default$", set_output_default_handler, 0);
 	mg_set_request_handler(ctx, "/buttons$", button_handler, 0);
 	mg_set_request_handler(ctx, "/switches$", switches_handler, 0);
-	mg_set_request_handler(ctx, "/favicon.ico", file_not_found_handler, 0);
-	mg_set_request_handler(ctx, "/", index_handler, 0);
+	mg_set_request_handler(ctx, "/", file_system_handler, 0);
 
 	// now check output timeouts
 	while (true) {

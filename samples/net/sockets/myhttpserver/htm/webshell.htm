@@ -1,7 +1,3 @@
-<!--#include <civetweb.h> -->
-<!--extern void send_ok(struct mg_connection *conn, const char* mime_type); -->
-<!--int webshell_handler(struct mg_connection *conn, void *cbdata) { -->
-<!--send_ok(conn, "text/html");-->
 <html lang="en"><head>
    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -14,25 +10,23 @@
                e.preventDefault();
                var cmd = $(this).val();
                $(this).val("");
-               $('#shell_output').val($('#shell_output').val() + '\n>' + cmd);
+               $('#shell_output').val('>' + cmd);
                if (cmd == 'clear') { $('#shell_output').val("");
                } else if (cmd != '') {
                   $.post("/shell", cmd, function (data) {
-                     //data = data.replace(/\x1b\[13/gi, '\t');
-                     //$('#shell_output').val($('#shell_output').val() + data);
-                     $('#shell_output').val(data);
+                     data = data.replace(/\x1b\[13C/gi, '\t');
+                     data = data.replace(/\x1b\[[^mC]{0,4}[mC]/gi, '');
+                     $('#shell_output').val($('#shell_output').val() + data);
                   });
                }
-               //$('#shell_output')[0].scrollTop = $('#shell_output')[0].scrollHeight;
             }
          });
-
       });
    </script>
 <body> 
 <form>
   <div class="form-group">
-    <textarea disabled class="form-control" id="shell_output" rows="25"></textarea>
+    <textarea disabled class="form-control" id="shell_output" rows="20" style="font-family:monospace;"></textarea>
   </div>
   <div class="form-group">
     <input type="text" class="form-control" id="shell_input" placeholder="help">
@@ -40,5 +34,3 @@
 </form>
 </body>
 </html>
-<!--return 200;-->
-<!--}-->
