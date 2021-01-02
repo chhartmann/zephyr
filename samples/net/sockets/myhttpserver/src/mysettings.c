@@ -110,12 +110,6 @@ static int cmd_mac(const struct shell *shell, size_t argc, char **argv) {
 	return 0;
 }
 
-static int cmd_reboot(const struct shell *shell, size_t argc, char **argv) {
-	shell_fprintf(shell, SHELL_NORMAL, "Rebooting now...\n");
-	sys_reboot(SYS_REBOOT_COLD);
-	return 0;
-}
-
 SHELL_STATIC_SUBCMD_SET_CREATE(sub_settings,
 	SHELL_CMD(show, NULL, "Show all settings", cmd_show),
 	SHELL_CMD(sntp, NULL, "Set SNTP server", cmd_sntp),
@@ -125,4 +119,3 @@ SHELL_STATIC_SUBCMD_SET_CREATE(sub_settings,
 );
 
 SHELL_CMD_REGISTER(settings, &sub_settings, "Setting commands", NULL);
-SHELL_CMD_REGISTER(reboot, NULL, "Reboot", cmd_reboot);

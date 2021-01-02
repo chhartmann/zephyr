@@ -25,6 +25,7 @@ LOG_MODULE_REGISTER(myhttpserver, LOG_LEVEL_DBG);
 #include "log_backend_rb.h"
 #include "mysettings.h"
 #include "mygpio.h"
+#include "web_shell.h"
 #include "cJSON.h"
 
 #define HTTP_PORT	80
@@ -38,6 +39,7 @@ LOG_MODULE_REGISTER(myhttpserver, LOG_LEVEL_DBG);
 // generated from html files
 extern int button_handler(struct mg_connection *conn, void *cbdata);
 extern int switches_handler(struct mg_connection *conn, void *cbdata);
+extern int webshell_handler(struct mg_connection *conn, void *cbdata);
 extern int index_handler(struct mg_connection *conn, void *cbdata);
 
 K_THREAD_STACK_DEFINE(civetweb_stack, CIVETWEB_MAIN_THREAD_STACK_SIZE);
@@ -183,6 +185,41 @@ static int get_output_handler(struct mg_connection *conn, void *cbdata)
 	return 200;
 }
 
+static int webshell_cmd_handler(struct mg_connection *conn, void *cbdata)
+{
+	const struct mg_request_info *ri = mg_get_request_info(conn);
+	char buffer[256];
+	int dlen = mg_read(conn, buffer, sizeof(buffer) - 1);
+
+	if (0 != strcmp(ri->request_method, "POST")) {
+		send_error(conn, "Only POST requests are allowed");
+		return 400;
+	}
+
+	if ((dlen < 1) || (dlen >= sizeof(buffer))) {
+		send_error(conn, "Invalid data size (no or exceeded maximum length)");
+		return 400;
+	}
+
+	buffer[dlen] = 0;	
+	LOG_INF("HTTP params: %s", buffer);
+
+	send_ok(conn, "text/plain");
+
+	shell_backend_dummy_clear_output(shell_backend_dummy_get_ptr());
+	shell_execute_cmd(shell_backend_dummy_get_ptr(), buffer);
+
+	size_t out_len;
+	const char* out_buf;
+	out_buf = shell_backend_dummy_get_output(shell_backend_dummy_get_ptr(), &out_len);
+
+	mg_write(conn, out_buf, out_len);
+
+	mg_printf(conn, "\n");
+
+	return 200;
+}
+
 static int get_log_handler(struct mg_connection *conn, void *cbdata)
 {
 	char line[CONFIG_LOG_BACKEND_RB_SLOT_SIZE];
@@ -234,6 +271,8 @@ static void *main_pthread(void *arg)
 	}
 
 	mg_set_request_handler(ctx, "/log$", get_log_handler, 0);
+	mg_set_request_handler(ctx, "/shell$", webshell_cmd_handler, 0);
+	mg_set_request_handler(ctx, "/webshell$", webshell_handler, 0);
 	mg_set_request_handler(ctx, "/get$", get_output_handler, 0);
 	mg_set_request_handler(ctx, "/set$", set_output_handler, 0);
 	mg_set_request_handler(ctx, "/set_default$", set_output_default_handler, 0);
