@@ -11,7 +11,6 @@ struct mysettings {
    uint32_t magic;
    uint32_t flash_counter;
    char sntp_server[64];
-   char syslog_server[64];
    uint8_t mac_address[6];
 };
 
