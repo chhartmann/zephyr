@@ -49,16 +49,31 @@ struct file_def {
 };
 
 static const char index_htm[] = {
-	#include "../htm/index.htm.inc"
+	#include "../htm/index.htm.gz.inc"
 };
 
 static const char webshell_htm[] = {
-	#include "../htm/webshell.htm.inc"
+	#include "../htm/webshell.htm.gz.inc"
+};
+
+static const char bootstrap_js[] = {
+	#include "../htm/bootstrap.bundle.min.js.gz.inc"
+};
+
+static const char bootstrap_css[] = {
+	#include "../htm/bootstrap.min.css.gz.inc"
+};
+
+static const char jquery_js[] = {
+	#include "../htm/jquery-3.3.1.min.js.gz.inc"
 };
 
 struct file_def file_system[] = {
 	{.path = "/", .mime = "text/html", .data = index_htm, .len = sizeof(index_htm)},
 	{.path = "/webshell", .mime = "text/html", .data = webshell_htm, .len = sizeof(webshell_htm)},
+	{.path = "/bootstrap.bundle.min.js", .mime = "text/javascript", .data = bootstrap_js, .len = sizeof(bootstrap_js)},
+	{.path = "/bootstrap.min.css", .mime = "text/css", .data = bootstrap_css, .len = sizeof(bootstrap_css)},
+	{.path = "/jquery-3.3.1.min.js", .mime = "text/javascript", .data = jquery_js, .len = sizeof(jquery_js)},
 };
 
 K_THREAD_STACK_DEFINE(civetweb_stack, CIVETWEB_MAIN_THREAD_STACK_SIZE);
@@ -256,9 +271,12 @@ static int file_system_handler(struct mg_connection *conn, void *cbdata)
 	const struct mg_request_info *ri = mg_get_request_info(conn);
 
 	for (uint32_t i = 0; i < sizeof(file_system)/sizeof(file_system)[0]; i++) {
-		printf("found %s\n", file_system[i].path);
 		if (0 == strcmp(ri->request_uri, file_system[i].path)) {
-			send_ok(conn, file_system[i].mime);
+			mg_printf(conn,
+				"HTTP/1.1 200 OK\r\n"
+				"Content-Type: %s\r\n"
+				"Content-Encoding: gzip\r\n"
+				"Connection: close\r\n\r\n", file_system[i].mime);
 			mg_write(conn, file_system[i].data, file_system[i].len);
 			return 200;
 		}
