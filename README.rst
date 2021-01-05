@@ -29,6 +29,8 @@ Known Issues
 ************
 
 * Telnet is not working with windows telnet. Only linux telnet is working at the moment.
+* When a telnet connection is interrupted during logging the system crashes. When telnet connection is closed with '^]', everything is fine.
+* Memory leak / crash when flooding with parallel http requests.
 
 
 Building and Running
@@ -49,6 +51,7 @@ HTTP Connections Points
 ***********************
 
 * /index - HTML start page with links to all other pages.
-* /set - Send HTTP POST to control outputs with an optional delay value meaning the outputs are toggled back after the delay time.  e.g. curl -d '{ "delay":2000, "led1":0, "led3":1 }' http://192.168.0.133/set
+* /set_outputs - Send HTTP POST to control outputs with an optional delay value meaning the outputs are toggled back after the delay time.  e.g. curl -d '{ "delay":2000, "led1":0, "led3":1 }' http://192.168.0.133/set
 * /set_default - Send HTTP POST to reset all outputs. Used by website /switches
-* /get - Get json string with all outputs and their state
+* /get_outputs - Get json string with all outputs and their state
+* /get_inputs - Get json string with all inputs and their state

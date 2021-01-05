@@ -22,8 +22,8 @@
   </div></div>
   <script>
   $(document).ready(function(){
-     $(".btn").on("mousedown", function(e) { $.post("/set", `{"${e.target.value}":1}`); });
-     $(".btn").on("mouseup", function(e) { $.post("/set", `{"${e.target.value}":0}`); });
+     $(".btn").on("mousedown", function(e) { $.post("/set_outputs", `{"${e.target.value}":1}`); });
+     $(".btn").on("mouseup", function(e) { $.post("/set_outputs", `{"${e.target.value}":0}`); });
   });
   </script>
   </body></html>

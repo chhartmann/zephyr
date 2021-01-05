@@ -24,7 +24,6 @@ bool get_input_state(uint32_t index) {
 
 void input_callback(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
 {
-	LOG_INF("Input changed device 0x%x pins 0x%x", dev, pins);
 	for (uint32_t i = 0; i < NUM_INPUTS; i++) {
 		if (get_input(i)->dev == dev && (pins & BIT(get_input(i)->index))) {
 			LOG_INF("Input name %s", get_input(i)->json_name);

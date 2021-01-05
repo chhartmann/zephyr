@@ -34,7 +34,7 @@
       $(":checkbox").change(function () { 
          var id = $(this).prop("id");
          var val = $(this).prop("checked") ? 1 : 0;
-         $.post("/set", `{"${id}":${val}}`); 
+         $.post("/set_outputs", `{"${id}":${val}}`); 
       });
       $("#default_button").click(function () {
          $.post("/set_default"); 

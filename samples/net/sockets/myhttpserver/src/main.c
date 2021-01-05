@@ -220,6 +220,19 @@ static int get_output_handler(struct mg_connection *conn, void *cbdata)
 	return 200;
 }
 
+static int get_input_handler(struct mg_connection *conn, void *cbdata)
+{
+	send_ok(conn, "text/plain");
+
+	mg_printf(conn, "{");
+	for (uint32_t i = 0; i < NUM_INPUTS; i++) {
+		mg_printf(conn, "%s \"%s\":%d", i == 0 ? "" : ",", get_input(i)->json_name, get_input_state(i));		
+	}
+	mg_printf(conn, "}");
+
+	return 200;
+}
+
 static int webshell_cmd_handler(struct mg_connection *conn, void *cbdata)
 {
 	const struct mg_request_info *ri = mg_get_request_info(conn);
@@ -321,8 +334,9 @@ static void *main_pthread(void *arg)
 
 	mg_set_request_handler(ctx, "/log$", get_log_handler, 0);
 	mg_set_request_handler(ctx, "/shell$", webshell_cmd_handler, 0);
-	mg_set_request_handler(ctx, "/get$", get_output_handler, 0);
-	mg_set_request_handler(ctx, "/set$", set_output_handler, 0);
+	mg_set_request_handler(ctx, "/get_outputs$", get_output_handler, 0);
+	mg_set_request_handler(ctx, "/get_inputs$", get_input_handler, 0);
+	mg_set_request_handler(ctx, "/set_outputs$", set_output_handler, 0);
 	mg_set_request_handler(ctx, "/set_default$", set_output_default_handler, 0);
 	mg_set_request_handler(ctx, "/buttons$", button_handler, 0);
 	mg_set_request_handler(ctx, "/switches$", switches_handler, 0);
