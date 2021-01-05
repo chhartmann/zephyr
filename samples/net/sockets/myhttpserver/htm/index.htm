@@ -1,5 +1,5 @@
 <html lang="en"><head>
-   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
    <link href="bootstrap.min.css" rel="stylesheet">
    <script src="bootstrap.bundle.min.js"></script>
    <script src="jquery-3.3.1.min.js"></script>
@@ -12,16 +12,18 @@
           console.log($(this).attr("href"));
           $("#myiframe").attr("src", $(this).attr("href"));
         }); 
- 
       });
-    </script>
-<body> 
+    </script>      
+<body>
 <ul class="nav nav-tabs">
   <li class="nav-item">
     <a class="nav-link active" href="switches">Switches</a>        
   </li>
   <li class="nav-item">
     <a class="nav-link" href="buttons">Buttons</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="inputs">Inputs</a>
   </li>
   <li class="nav-item">
     <a class="nav-link" href="log">Log</a>

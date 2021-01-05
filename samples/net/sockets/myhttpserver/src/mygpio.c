@@ -4,6 +4,9 @@
 LOG_MODULE_DECLARE(myhttpserver, LOG_LEVEL_DBG);
 
 struct output_struct outputs[NUM_OUTPUTS] = {0};
+struct input_struct inputs[NUM_INPUTS] = {0};
+
+static struct gpio_callback input_cb_data;
 
 void set_output(uint32_t index, uint8_t value, int64_t timer) {
 	__ASSERT(index < NUM_OUTPUTS, "invalid index for set_output");
@@ -12,6 +15,38 @@ void set_output(uint32_t index, uint8_t value, int64_t timer) {
 	}
 	outputs[index].value = value;
 	outputs[index].timer = timer > 0 ? k_uptime_get() + timer : 0;
+}
+
+bool get_input_state(uint32_t index) {
+	__ASSERT(index < NUM_INPUTS, "invalid index for get_input_state");
+	return gpio_pin_get(get_input(index)->dev, get_input(index)->index);
+}
+
+void input_callback(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
+{
+	LOG_INF("Input changed device 0x%x pins 0x%x", dev, pins);
+	for (uint32_t i = 0; i < NUM_INPUTS; i++) {
+		if (get_input(i)->dev == dev && (pins & BIT(get_input(i)->index))) {
+			LOG_INF("Input name %s", get_input(i)->json_name);
+		}
+	}
+}
+
+void setup_input(uint32_t index, const char * const json_name, const char * const port, const uint8_t pin_index) {
+	if (index < NUM_INPUTS) {
+		inputs[index].json_name = json_name;
+		inputs[index].dev = device_get_binding(port);
+		inputs[index].index = pin_index;
+
+		if (inputs[index].dev == NULL) {
+			LOG_ERR("Failed to get device for %s\n", inputs[index].json_name);
+		} else if (0 != gpio_pin_configure(inputs[index].dev, inputs[index].index, GPIO_INPUT)) {
+			LOG_ERR("Failed to configure input\n");
+		} else if (0 != gpio_pin_interrupt_configure(inputs[index].dev, pin_index, GPIO_INT_EDGE_TO_ACTIVE))
+			LOG_ERR("Failed to enable interrupt for input\n");	
+		} else {
+		LOG_ERR("Invalid index for input: %s\n", json_name);
+	}
 }
 
 void setup_output(const uint32_t index, 
@@ -51,17 +86,30 @@ void check_output_timer() {
 	}
 }
 
-void init_outputs() {
+void init_gpios() {
 	LOG_INF("Initializing GPIOs");
 	uint32_t i = 0;
-	setup_output(i++, "led1", "GPIOB", 0, 0, 0);
-	setup_output(i++, "led2", "GPIOE", 1, 0, 0);
-	setup_output(i++, "led3", "GPIOB", 14, 0, 0);
+	setup_output(i++, "green led", "GPIOB", 0, 0, 0);
+	setup_output(i++, "orange led", "GPIOE", 1, 0, 0);
+	setup_output(i++, "red led", "GPIOB", 14, 0, 0);
 	__ASSERT(i == NUM_OUTPUTS, "Setup %d outputs instead of %d\n", i, NUM_OUTPUTS);
+
+	i = 0;
+	setup_input(i++, "button", "GPIOC", 13);
+	__ASSERT(i == NUM_OUTPUTS, "Setup %d inputs instead of %d\n", i, NUM_INPUTS);
+
+	//TODO make this more generic - not sure, if one input_cb_data per port is needed
+	// foreach port get relevant inputs and generate mask and init callback
+	gpio_init_callback(&input_cb_data, input_callback, -1);
+	gpio_add_callback(inputs[0].dev, &input_cb_data);
 }
 
 struct output_struct const * const get_output(uint32_t index) {
    return &outputs[index];
+}
+
+struct input_struct const * const get_input(uint32_t index) {
+   return &inputs[index];
 }
 
 int32_t get_output_by_name(const char * const json_name) {

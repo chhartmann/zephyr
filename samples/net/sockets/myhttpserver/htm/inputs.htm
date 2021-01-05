@@ -1,0 +1,39 @@
+<!--#include <civetweb.h> -->
+<!--#include "../src/mygpio.h" -->
+
+<!--extern void send_ok(struct mg_connection *conn, const char* mime_type); -->
+
+<!--int input_handler(struct mg_connection *conn, void *cbdata) { -->
+<!--send_ok(conn, "text/html");-->
+<html lang="en"><head>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="stylesheet" href="bootstrap.min.css">
+  <style>
+    .fa { margin-right: 15px; }
+    .list-group-item { display: flex; justify-content: space-between; width: 100%; }
+  </style>
+  <script src="jquery-3.3.1.min.js"></script>
+  <script src="bootstrap.bundle.min.js"></script>
+  <title>Inputs</title></head><body>
+  <div class="container"><div class="row">
+  <div class="col-sm"></div>
+  <div class="col-sm">
+
+   <ul class="list-group">
+  <!--for (uint32_t i = 0; i < NUM_INPUTS; i++) {-->
+   <!-- if (true == get_input_state(i)) { -->
+  <!--mg_printf(conn, "<li class=\"list-group-item\">%s<span class=\"badge rounded-pill bg-success\">high</span></li>\n", get_input(i)->json_name);-->
+   <!-- } else { -->
+  <!--mg_printf(conn, "<li class=\"list-group-item\">%s<span class=\"badge rounded-pill bg-secondary\">low</span></li>\n", get_input(i)->json_name);-->
+   <!-- } -->
+  <!--}-->
+    </ul>
+    
+  </div>                       
+  <div class="col-sm"></div>
+  </div></div>
+  <script>
+  </script>
+  </body></html>
+  <!--return 200;-->
+  <!--}-->

@@ -39,6 +39,7 @@ LOG_MODULE_REGISTER(myhttpserver, LOG_LEVEL_DBG);
 // generated from html files
 extern int button_handler(struct mg_connection *conn, void *cbdata);
 extern int switches_handler(struct mg_connection *conn, void *cbdata);
+extern int input_handler(struct mg_connection *conn, void *cbdata);
 
 // pseude file system for static html files
 struct file_def {
@@ -325,6 +326,7 @@ static void *main_pthread(void *arg)
 	mg_set_request_handler(ctx, "/set_default$", set_output_default_handler, 0);
 	mg_set_request_handler(ctx, "/buttons$", button_handler, 0);
 	mg_set_request_handler(ctx, "/switches$", switches_handler, 0);
+	mg_set_request_handler(ctx, "/inputs$", input_handler, 0);
 	mg_set_request_handler(ctx, "/", file_system_handler, 0);
 
 	// now check output timeouts
@@ -371,7 +373,7 @@ void main(void)
 				     NET_EVENT_IPV4_ADDR_ADD);
 	net_mgmt_add_event_callback(&mgmt_cb);
 
-	init_outputs();
+	init_gpios();
 
 	pthread_attr_t civetweb_attr;
 	pthread_t civetweb_thread;

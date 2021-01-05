@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.13.1)
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(civetweb)
 
-set(HTML_DYNAMIC_FILES buttons.htm switches.htm)
+set(HTML_DYNAMIC_FILES buttons.htm switches.htm inputs.htm)
 set(HTML_STATIC_FILES webshell.htm index.htm bootstrap.bundle.min.js bootstrap.min.css jquery-3.3.1.min.js)
 
 target_sources(app PRIVATE src/main.c src/log_backend_rb.c src/mysettings.c src/mygpio.c src/web_shell.c
