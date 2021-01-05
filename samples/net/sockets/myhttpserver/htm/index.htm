@@ -13,27 +13,35 @@
           $("#myiframe").attr("src", $(this).attr("href"));
         }); 
       });
-    </script>      
+    </script>
+    <style>
+body, html {width: 100%; height: 100%; margin: 0; padding: 0}
+.row-container {display: flex; width: 100%; height: 100%; flex-direction: column; overflow: hidden;}
+.second-row { flex-grow: 1; border: none; margin: 0; padding: 0; }      
+    </style>
 <body>
-<ul class="nav nav-tabs">
-  <li class="nav-item">
-    <a class="nav-link active" href="switches">Switches</a>        
-  </li>
-  <li class="nav-item">
-    <a class="nav-link" href="buttons">Buttons</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link" href="inputs">Inputs</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link" href="log">Log</a>
-  </li>
-  <li class="nav-item">
-   <a class="nav-link" href="webshell">Shell</a>
- </li>
-</ul>   
+  <div class="row-container">
+    <div class="first-row">
 
-<div class="col-md-12">                                                              
+      <ul class="nav nav-tabs">
+        <li class="nav-item">
+          <a class="nav-link active" href="switches">Switches</a>        
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="buttons">Buttons</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="inputs">Inputs</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="log">Log</a>
+        </li>
+        <li class="nav-item">
+        <a class="nav-link" href="webshell">Shell</a>
+      </li>
+      </ul>   
+      </div>
+<div class="col-md-12 second-row">                                                              
   <iframe id="myiframe" width="100%" height="100%" src="switches"/>                                                                                          
 </div>
 </body>
