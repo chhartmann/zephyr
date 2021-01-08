@@ -21,10 +21,11 @@
 
    <ul class="list-group">
   <!--for (uint32_t i = 0; i < NUM_INPUTS; i++) {-->
+    <!-- const char* json_name = get_input(i)->json_name; -->
    <!-- if (true == get_input_state(i)) { -->
-  <!--mg_printf(conn, "<li class=\"list-group-item\">%s<span class=\"badge rounded-pill bg-success\">high</span></li>\n", get_input(i)->json_name);-->
+  <!--mg_printf(conn, "<li class='list-group-item'>%s<span class='badge rounded-pill bg-success' id='%s'>high</span></li>\n", json_name, json_name);-->
    <!-- } else { -->
-  <!--mg_printf(conn, "<li class=\"list-group-item\">%s<span class=\"badge rounded-pill bg-secondary\">low</span></li>\n", get_input(i)->json_name);-->
+  <!--mg_printf(conn, "<li class='list-group-item'>%s<span class='badge rounded-pill bg-secondary' id='%s'>low</span></li>\n", json_name, json_name);-->
    <!-- } -->
   <!--}-->
     </ul>
@@ -33,6 +34,28 @@
   <div class="col-sm"></div>
   </div></div>
   <script>
+    $(document).ready(function(){
+        var ws = new WebSocket("ws://" + $(location).attr('hostname') + "/ws_gpio_status");
+        ws.onmessage = function (event) {
+          var data = JSON.parse(event.data);
+          console.log(data);
+          var id = Object.keys(data)[0];
+          if (data[id] == 0) {
+            $("#"+id).removeClass("bg-success");
+            $("#"+id).addClass("bg-secondary");
+            $("#"+id).text("low");
+          } else {
+            $("#"+id).addClass("bg-success");
+            $("#"+id).removeClass("bg-secondary");
+            $("#"+id).text("high");
+          }
+        }
+
+        window.onbeforeunload = function () {
+          console.log("unload");
+          ws.close();
+        };
+    });    
   </script>
   </body></html>
   <!--return 200;-->
