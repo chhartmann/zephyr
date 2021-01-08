@@ -26,6 +26,7 @@ LOG_MODULE_REGISTER(myhttpserver, LOG_LEVEL_DBG);
 #include "mysettings.h"
 #include "mygpio.h"
 #include "web_shell.h"
+#include "websocket.h"
 #include "cJSON.h"
 
 #define HTTP_PORT	80
@@ -343,11 +344,7 @@ static void *main_pthread(void *arg)
 	mg_set_request_handler(ctx, "/inputs$", input_handler, 0);
 	mg_set_request_handler(ctx, "/", file_system_handler, 0);
 
-	// now check output timeouts
-	while (true) {
-		check_output_timer();
-		k_msleep(100);
-	}
+	init_websocket_server_handlers(ctx); // this call will not return
 	return 0;
 }
 
@@ -399,4 +396,10 @@ void main(void)
 
 	(void)pthread_create(&civetweb_thread, &civetweb_attr,
 			     &main_pthread, 0);
+
+	// now check output timeouts
+	while (true) {
+		check_output_timer();
+		k_msleep(100);
+	}
 }

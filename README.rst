@@ -31,6 +31,7 @@ Known Issues
 * Telnet is not working with windows telnet. Only linux telnet is working at the moment.
 * When a telnet connection is interrupted during logging the system crashes. When telnet connection is closed with '^]', everything is fine.
 * Memory leak / crash when flooding with parallel http requests.
+* Only one webserver thread can be used at the moment. When multiple threads are configured, the system crashes.
 
 
 Building and Running
@@ -55,3 +56,4 @@ HTTP Connections Points
 * /set_default - Send HTTP POST to reset all outputs. Used by website /switches
 * /get_outputs - Get json string with all outputs and their state
 * /get_inputs - Get json string with all inputs and their state
+* /ws_gpio_status - Receive changes of inputs or outputs over websocket

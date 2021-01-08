@@ -8,6 +8,18 @@ struct input_struct inputs[NUM_INPUTS] = {0};
 
 static struct gpio_callback input_cb_data;
 
+void(*listener_callback)(const char*, uint8_t) = NULL;
+
+void register_listener(void(*fun_ptr)(const char*, uint8_t)) {
+	listener_callback = fun_ptr;
+}
+
+void listener(const char* json_name, uint8_t val) {
+	if (listener_callback) {
+		listener_callback(json_name, val);
+	}
+}
+
 void set_output(uint32_t index, uint8_t value, int64_t timer) {
 	__ASSERT(index < NUM_OUTPUTS, "invalid index for set_output");
 	if (gpio_pin_set(outputs[index].dev, outputs[index].index, value)) {
@@ -15,6 +27,7 @@ void set_output(uint32_t index, uint8_t value, int64_t timer) {
 	}
 	outputs[index].value = value;
 	outputs[index].timer = timer > 0 ? k_uptime_get() + timer : 0;
+	listener(outputs[index].json_name, value);
 }
 
 bool get_input_state(uint32_t index) {
@@ -26,7 +39,7 @@ void input_callback(const struct device *dev, struct gpio_callback *cb, uint32_t
 {
 	for (uint32_t i = 0; i < NUM_INPUTS; i++) {
 		if (get_input(i)->dev == dev && (pins & BIT(get_input(i)->index))) {
-			LOG_INF("Input name %s", get_input(i)->json_name);
+			listener(get_input(i)->json_name, get_input_state(i));
 		}
 	}
 }
@@ -41,7 +54,7 @@ void setup_input(uint32_t index, const char * const json_name, const char * cons
 			LOG_ERR("Failed to get device for %s\n", inputs[index].json_name);
 		} else if (0 != gpio_pin_configure(inputs[index].dev, inputs[index].index, GPIO_INPUT)) {
 			LOG_ERR("Failed to configure input\n");
-		} else if (0 != gpio_pin_interrupt_configure(inputs[index].dev, pin_index, GPIO_INT_EDGE_TO_ACTIVE))
+		} else if (0 != gpio_pin_interrupt_configure(inputs[index].dev, pin_index, GPIO_INT_EDGE_BOTH))
 			LOG_ERR("Failed to enable interrupt for input\n");	
 		} else {
 		LOG_ERR("Invalid index for input: %s\n", json_name);
