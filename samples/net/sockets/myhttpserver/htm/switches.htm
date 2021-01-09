@@ -16,6 +16,8 @@
    <div class="col-sm"></div>
    <div class="col-sm">
 
+   <div class="alert alert-secondary" role="alert" id='live-update'></div>
+
    <input id="default_button" class="btn btn-primary m-1" value="Set all to default"/>
 
    <!--for (uint32_t i = 0; i < NUM_OUTPUTS; i++) {-->
@@ -30,7 +32,7 @@
    <div class="col-sm"></div>
    </div></div>
    <script>
-   $(document).ready(function() {
+   $(document).ready(function() {      
       $(":checkbox").change(function () { 
          var id = $(this).prop("id");
          var val = $(this).prop("checked") ? 1 : 0;
@@ -40,6 +42,40 @@
          $.post("/set_default"); 
          location.reload();
       });
+      var ws = new WebSocket("ws://" + $(location).attr('hostname') + "/ws_gpio_status");
+      function liveUpdateOn() {
+        $('#live-update').addClass('alert-success');
+        $('#live-update').removeClass('alert-secondary');
+        $('#live-update').text('Live update active');
+      }
+      function liveUpdateOff() {
+         $('#live-update').removeClass('alert-success');
+         $('#live-update').addClass('alert-secondary');    
+         $('#live-update').text('Live update inactive');
+      }
+      ws.onclose = liveUpdateOff;
+      ws.onerror = liveUpdateOff;
+      ws.onopen = liveUpdateOn;
+
+      ws.onmessage = function (event) {
+         var data = JSON.parse(event.data);
+         console.log(data);
+         var id = Object.keys(data)[0];
+         var elem = $("[id='"+id+"']");
+         if (elem) {
+            elem.prop('checked', data[id]);
+            if (data[id] == 0 && elem.hasClass('checked')) {
+               elem.removeClass('checked');    
+            } else if (data[id] != 0 && !elem.hasClass('checked')) {
+               elem.addClass('checked');    
+            }
+         }
+      }
+
+      window.onbeforeunload = function () {
+         console.log("unload");
+         ws.close();
+      };
    });
    </script>
    </body></html>

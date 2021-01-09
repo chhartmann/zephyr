@@ -19,6 +19,8 @@
   <div class="col-sm"></div>
   <div class="col-sm">
 
+  <div class="alert alert-secondary" role="alert" id='live-update'></div>
+
    <ul class="list-group">
   <!--for (uint32_t i = 0; i < NUM_INPUTS; i++) {-->
     <!-- const char* json_name = get_input(i)->json_name; -->
@@ -36,18 +38,35 @@
   <script>
     $(document).ready(function(){
         var ws = new WebSocket("ws://" + $(location).attr('hostname') + "/ws_gpio_status");
+        function liveUpdateOn() {
+        $('#live-update').addClass('alert-success');
+        $('#live-update').removeClass('alert-secondary');
+        $('#live-update').text('Live update active');
+    }
+    function liveUpdateOff() {
+        $('#live-update').removeClass('alert-success');
+        $('#live-update').addClass('alert-secondary');    
+        $('#live-update').text('Live update inactive');
+    }
+    ws.onclose = liveUpdateOff;
+    ws.onerror = liveUpdateOff;
+    ws.onopen = liveUpdateOn;
+
         ws.onmessage = function (event) {
           var data = JSON.parse(event.data);
           console.log(data);
           var id = Object.keys(data)[0];
-          if (data[id] == 0) {
-            $("#"+id).removeClass("bg-success");
-            $("#"+id).addClass("bg-secondary");
-            $("#"+id).text("low");
-          } else {
-            $("#"+id).addClass("bg-success");
-            $("#"+id).removeClass("bg-secondary");
-            $("#"+id).text("high");
+          var elem = $("[id='"+id+"']");
+          if (elem) {
+            if (data[id] == 0) {
+              elem.addClass("bg-secondary");
+              elem.text("low");
+              elem.removeClass("bg-success");
+            } else {
+              elem.addClass("bg-success");
+              elem.removeClass("bg-secondary");
+              elem.text("high");
+            }
           }
         }
 
