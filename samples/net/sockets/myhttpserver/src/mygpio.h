@@ -36,7 +36,7 @@ extern bool set_output_by_name(const char * const json_name, const uint8_t value
 extern int32_t get_output_by_name(const char * const json_name);
 extern struct output_struct const * const get_output(uint32_t index);
 extern struct input_struct const * const get_input(uint32_t index);
-extern void register_listener(void(*fun_ptr)(const char*, uint8_t));
+extern void mygpio_register_listener(void(*fun_ptr)(const char*, uint8_t));
 
 #ifdef __cplusplus
 }

@@ -10,11 +10,11 @@ static struct gpio_callback input_cb_data;
 
 void(*listener_callback)(const char*, uint8_t) = NULL;
 
-void register_listener(void(*fun_ptr)(const char*, uint8_t)) {
+void mygpio_register_listener(void(*fun_ptr)(const char*, uint8_t)) {
 	listener_callback = fun_ptr;
 }
 
-void listener(const char* json_name, uint8_t val) {
+static void gpio_listener(const char* json_name, uint8_t val) {
 	if (listener_callback) {
 		listener_callback(json_name, val);
 	}
@@ -27,7 +27,7 @@ void set_output(uint32_t index, uint8_t value, int64_t timer) {
 	}
 	outputs[index].value = value;
 	outputs[index].timer = timer > 0 ? k_uptime_get() + timer : 0;
-	listener(outputs[index].json_name, value);
+	gpio_listener(outputs[index].json_name, value);
 }
 
 bool get_input_state(uint32_t index) {
@@ -39,7 +39,7 @@ void input_callback(const struct device *dev, struct gpio_callback *cb, uint32_t
 {
 	for (uint32_t i = 0; i < NUM_INPUTS; i++) {
 		if (get_input(i)->dev == dev && (pins & BIT(get_input(i)->index))) {
-			listener(get_input(i)->json_name, get_input_state(i));
+			gpio_listener(get_input(i)->json_name, get_input_state(i));
 		}
 	}
 }

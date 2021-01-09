@@ -27,6 +27,7 @@
     "C_Cpp.default.cppStandard": "c++17",
     "editor.tabSize": 3,
     "files.associations": {
-        "cstdlib": "cpp"
+        "cstdlib": "cpp",
+        "*.cp": "c"
     }
 }

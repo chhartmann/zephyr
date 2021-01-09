@@ -20,35 +20,53 @@ LOG_MODULE_REGISTER(websocket_server, LOG_LEVEL_INF);
 #define BOOL_MASK		0x1  /* boolean value mask */
 #define HALF_BYTE_MASK		0xF  /* half byte value mask */
 
+#define MAX_NUM_WS_CONN 2 // with currently 3 threads one should be reserved for http connections
+
+enum ws_endpoint {
+	WS_ENDPOINT_NONE,
+	WS_ENDPOINT_GPIO
+};
+
 struct ws_connection {
    struct mg_connection * conn;
+	enum ws_endpoint endpoint;
    bool ready;
-   struct k_mutex mutex;
-} connection = {0};
+};
 
-#define WS_MSG_LEN 128
-K_MSGQ_DEFINE(ws_msgq, WS_MSG_LEN, 10, 4);
+K_MUTEX_DEFINE(ws_conn_mutex);
 
-char gpio_listener_buf[WS_MSG_LEN];
+struct ws_connection ws_conn[MAX_NUM_WS_CONN] = {0};
+
+#define WS_GPIO_MSG_LEN 128
+K_MSGQ_DEFINE(ws_gpio_msgq, WS_GPIO_MSG_LEN, 10, 4);
+
+char gpio_listener_buf[WS_GPIO_MSG_LEN];
 K_MUTEX_DEFINE(gpio_listener_mutex);
+
+static int ws_add_conn(struct mg_connection* conn, char* endpoint) {
+	int ret = -1;
+
+}
 
 static int ws_connect_handler(const struct mg_connection *conn, void *cbdata)
 {
+	const struct mg_request_info *ri = mg_get_request_info(conn);
 	int ret = -1;
 
-   k_mutex_lock(&connection.mutex, K_FOREVER);
-	if (!connection.conn) {
-		connection.conn = (struct mg_connection*)conn;
-		connection.ready = false;
-		ret = 0;
+   k_mutex_lock(&ws_conn_mutex, K_FOREVER);
+	for (uint32_t i = 0; i < MAX_NUM_WS_CONN; i++) {
+		if (ws_conn[i].conn == NULL) {
+			ws_conn[i].conn = conn;
+			ws_conn[i].ready = false;
+			ws_conn[i].endpoint = WS_ENDPOINT_GPIO;
+			ret = 0;
+			break;
+		}
 	}
-
-   k_mutex_unlock(&connection.mutex);
-
-	const struct mg_request_info *ri = mg_get_request_info(conn);
+	k_mutex_unlock(&ws_conn_mutex);
 
 	if (ret < 0) {
-	   LOG_INF("Websocket busy - declined connection from %s:%d", ri->remote_addr, ri->remote_port);
+	   LOG_INF("No free websocket - declined connection from %s:%d", ri->remote_addr, ri->remote_port);
 	} else {
 	   LOG_INF("Websocket connected from %s:%d", ri->remote_addr, ri->remote_port);
 	}
@@ -57,9 +75,14 @@ static int ws_connect_handler(const struct mg_connection *conn, void *cbdata)
 
 static void ws_ready_handler(struct mg_connection *conn, void *cbdata)
 {
-   k_mutex_lock(&connection.mutex, K_FOREVER);
-   connection.ready = true;
-   k_mutex_unlock(&connection.mutex);
+   k_mutex_lock(&ws_conn_mutex, K_FOREVER);
+	for (uint32_t i = 0; i < MAX_NUM_WS_CONN; i++) {
+		if (ws_conn[i].conn == conn) {
+			ws_conn[i].ready = true;
+			break;
+		}
+	}
+	k_mutex_unlock(&ws_conn_mutex);
 }
 
 static int ws_data_handler(struct mg_connection *conn, int bits,
@@ -120,18 +143,25 @@ static int ws_data_handler(struct mg_connection *conn, int bits,
 static void ws_close_handler(const struct mg_connection *conn,
 				    void *cbdata)
 {
-   k_mutex_lock(&connection.mutex, K_FOREVER);
-   connection.conn = NULL;
-   connection.ready = false;
-   k_mutex_unlock(&connection.mutex);
+   k_mutex_lock(&ws_conn_mutex, K_FOREVER);
+	for (uint32_t i = 0; i < MAX_NUM_WS_CONN; i++) {
+		if (ws_conn[i].conn == conn) {
+			ws_conn[i].conn = NULL;
+			ws_conn[i].ready = false;
+			ws_conn[i].endpoint = WS_ENDPOINT_NONE;
+			break;
+		}
+	}
+	k_mutex_unlock(&ws_conn_mutex);
+
  	const struct mg_request_info *ri = mg_get_request_info(conn);
    LOG_INF("Websocket close (%s:%d)", ri->remote_addr, ri->remote_port);
 }
 
 static void gpio_listener(const char* json_name, uint8_t value) {
    k_mutex_lock(&gpio_listener_mutex, K_FOREVER);
-   snprintf(gpio_listener_buf, WS_MSG_LEN, "{\"%s\":%d}", json_name, value);
-   if (k_msgq_put(&ws_msgq, gpio_listener_buf, K_NO_WAIT) != 0) {
+   snprintf(gpio_listener_buf, WS_GPIO_MSG_LEN, "{\"%s\":%d}", json_name, value);
+   if (k_msgq_put(&ws_gpio_msgq, gpio_listener_buf, K_NO_WAIT) != 0) {
       LOG_INF("failed to add gpio change to msg queue");
    }
    k_mutex_unlock(&gpio_listener_mutex);
@@ -139,8 +169,7 @@ static void gpio_listener(const char* json_name, uint8_t value) {
 
 void init_websocket_server_handlers(struct mg_context *ctx)
 {
-   k_mutex_init(&connection.mutex);
-   register_listener(gpio_listener);
+   mygpio_register_listener(gpio_listener);
 
 	mg_set_websocket_handler(ctx, "/ws_gpio_status",
 				ws_connect_handler,
@@ -149,16 +178,17 @@ void init_websocket_server_handlers(struct mg_context *ctx)
 				ws_close_handler,
 				NULL);
 
-   char msg[WS_MSG_LEN];
-
    k_thread_name_set(k_current_get(), "websocket_sender");
+   char msg[WS_GPIO_MSG_LEN];
 
    while (true) {
-      k_msgq_get(&ws_msgq, msg, K_FOREVER);
-      k_mutex_lock(&connection.mutex, K_FOREVER);
-      if (connection.conn != NULL && connection.ready) {
-         (void)mg_websocket_write(connection.conn, MG_WEBSOCKET_OPCODE_TEXT, msg, strlen(msg));
-      }
-      k_mutex_unlock(&connection.mutex);
+      k_msgq_get(&ws_gpio_msgq, msg, K_FOREVER);
+		k_mutex_lock(&ws_conn_mutex, K_FOREVER);
+		for (uint32_t i = 0; i < MAX_NUM_WS_CONN; i++) {
+			if (ws_conn[i].conn != NULL && ws_conn[i].ready && ws_conn[i].endpoint == WS_ENDPOINT_GPIO) {
+				(void)mg_websocket_write(ws_conn[i].conn, MG_WEBSOCKET_OPCODE_TEXT, msg, strlen(msg));
+			}
+		}
+		k_mutex_unlock(&ws_conn_mutex);
    }
 }
