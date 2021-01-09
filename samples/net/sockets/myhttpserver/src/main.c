@@ -314,7 +314,7 @@ static void *main_pthread(void *arg)
 		"listening_ports",
 		STRINGIFY(HTTP_PORT),
 		"num_threads",
-		"1",
+		"3",
 		"max_request_size",
 		STRINGIFY(MAX_REQUEST_SIZE_BYTES),
 		NULL

@@ -4,6 +4,9 @@ cmake_minimum_required(VERSION 3.13.1)
 
 option(CIVETWEB_ENABLE_WEBSOCKETS "Enable websockets connections" ON)
 
+# needed for civetweb - default of 8192 is not enough
+add_compile_definitions(USE_STACK_SIZE=12288) 
+
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(civetweb)
 

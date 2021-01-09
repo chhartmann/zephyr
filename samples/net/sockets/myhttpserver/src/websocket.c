@@ -6,7 +6,7 @@
 
 #include <logging/log.h>
 #include <kernel.h>
-LOG_MODULE_REGISTER(websocket_server, LOG_LEVEL_DBG);
+LOG_MODULE_REGISTER(websocket_server, LOG_LEVEL_INF);
 
 #include "websocket.h"
 #include "mygpio.h"
@@ -34,14 +34,25 @@ K_MUTEX_DEFINE(gpio_listener_mutex);
 
 static int ws_connect_handler(const struct mg_connection *conn, void *cbdata)
 {
+	int ret = -1;
+
    k_mutex_lock(&connection.mutex, K_FOREVER);
-   connection.conn = (struct mg_connection*)conn;
-   connection.ready = false;
+	if (!connection.conn) {
+		connection.conn = (struct mg_connection*)conn;
+		connection.ready = false;
+		ret = 0;
+	}
+
    k_mutex_unlock(&connection.mutex);
 
 	const struct mg_request_info *ri = mg_get_request_info(conn);
-   LOG_INF("Websocket connect from %s:%d", ri->remote_addr, ri->remote_port);
-	return 0;
+
+	if (ret < 0) {
+	   LOG_INF("Websocket busy - declined connection from %s:%d", ri->remote_addr, ri->remote_port);
+	} else {
+	   LOG_INF("Websocket connected from %s:%d", ri->remote_addr, ri->remote_port);
+	}
+	return ret;
 }
 
 static void ws_ready_handler(struct mg_connection *conn, void *cbdata)
@@ -49,7 +60,6 @@ static void ws_ready_handler(struct mg_connection *conn, void *cbdata)
    k_mutex_lock(&connection.mutex, K_FOREVER);
    connection.ready = true;
    k_mutex_unlock(&connection.mutex);
-   LOG_INF("websocket ready handler");
 }
 
 static int ws_data_handler(struct mg_connection *conn, int bits,
