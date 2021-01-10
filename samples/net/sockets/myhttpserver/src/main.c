@@ -58,6 +58,10 @@ static const char webshell_htm[] = {
 	#include "../htm/webshell.htm.gz.inc"
 };
 
+static const char live_log_htm[] = {
+	#include "../htm/live_log.htm.gz.inc"
+};
+
 static const char bootstrap_js[] = {
 	#include "../htm/bootstrap.bundle.min.js.gz.inc"
 };
@@ -73,6 +77,7 @@ static const char jquery_js[] = {
 struct file_def file_system[] = {
 	{.path = "/", .mime = "text/html", .data = index_htm, .len = sizeof(index_htm)},
 	{.path = "/webshell", .mime = "text/html", .data = webshell_htm, .len = sizeof(webshell_htm)},
+	{.path = "/live_log", .mime = "text/html", .data = live_log_htm, .len = sizeof(live_log_htm)},
 	{.path = "/bootstrap.bundle.min.js", .mime = "text/javascript", .data = bootstrap_js, .len = sizeof(bootstrap_js)},
 	{.path = "/bootstrap.min.css", .mime = "text/css", .data = bootstrap_css, .len = sizeof(bootstrap_css)},
 	{.path = "/jquery-3.3.1.min.js", .mime = "text/javascript", .data = jquery_js, .len = sizeof(jquery_js)},
