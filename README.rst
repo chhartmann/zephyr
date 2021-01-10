@@ -8,7 +8,6 @@ This is an extention of the existing webserver example customized for nucleo_h74
 * Telnet and serial shell are enabled with GPIO shell and date shell configured.
 * The ringbuffer log, which was part in earlier zephyr version, has been adapted. Immediate logging is activated.
 * It uses tha last 64Kbyte of the RAM. It can be printed with a shell command similar to dmesg.
-* The logging prefix is extended with an absolut timestamp.
 * DHCP is enabled. MAC address is currently read from flash. This will change in the future. By default only hardcoded or random MAC address is supported.
 * SNTP is used to get the current time. The default code for doing this is executed too early. Therefore a hook has been added where the SNTP routine is called.
 
@@ -54,3 +53,4 @@ HTTP Connections Points
 * /get_outputs - Get json string with all outputs and their state
 * /get_inputs - Get json string with all inputs and their state
 * /ws_gpio_status - Receive changes of inputs or outputs over websocket
+* /ws_log - Receive logging output

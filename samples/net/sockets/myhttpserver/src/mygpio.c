@@ -8,7 +8,7 @@ struct input_struct inputs[NUM_INPUTS] = {0};
 
 static struct gpio_callback input_cb_data;
 
-void(*listener_callback)(const char*, uint8_t) = NULL;
+static void(*listener_callback)(const char*, uint8_t) = NULL;
 
 void mygpio_register_listener(void(*fun_ptr)(const char*, uint8_t)) {
 	listener_callback = fun_ptr;

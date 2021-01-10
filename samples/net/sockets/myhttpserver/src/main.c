@@ -22,7 +22,7 @@ LOG_MODULE_REGISTER(myhttpserver, LOG_LEVEL_DBG);
 #include <posix/time.h>
 #include <civetweb.h>
 
-#include "log_backend_rb.h"
+#include "my_log_backend.h"
 #include "mysettings.h"
 #include "mygpio.h"
 #include "web_shell.h"
@@ -276,7 +276,7 @@ static int webshell_cmd_handler(struct mg_connection *conn, void *cbdata)
 
 static int get_log_handler(struct mg_connection *conn, void *cbdata)
 {
-	char line[CONFIG_LOG_BACKEND_RB_SLOT_SIZE];
+	char line[MY_LOG_BACKEND_RB_SLOT_SIZE];
 
 	send_ok(conn, "text/plain");
 

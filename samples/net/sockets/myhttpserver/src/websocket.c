@@ -5,13 +5,12 @@
  */
 
 #include <logging/log.h>
-#include <logging/log_backend.h>
-#include <logging/log_output.h>
 #include <kernel.h>
 
 LOG_MODULE_REGISTER(ws_server, LOG_LEVEL_INF);
 
 #include "websocket.h"
+#include "my_log_backend.h"
 #include "mygpio.h"
 
 #define FIN_SHIFT		   7u
@@ -27,12 +26,6 @@ LOG_MODULE_REGISTER(ws_server, LOG_LEVEL_INF);
 
 #define WS_URI_GPIO "/ws_gpio_status"
 #define WS_URI_LOG "/ws_log"
-
-#define WS_LOG_LINE_LEN 512
-
-static int ws_char_out(uint8_t *data, size_t length, void *ctx);
-static uint8_t ws_log_buf[WS_LOG_LINE_LEN];
-LOG_OUTPUT_DEFINE(log_output_ws, ws_char_out, ws_log_buf, sizeof(ws_log_buf));
 
 enum ws_endpoint {
 	WS_ENDPOINT_NONE,
@@ -185,9 +178,20 @@ static void gpio_listener(const char* json_name, uint8_t value) {
    k_mutex_unlock(&gpio_listener_mutex);
 }
 
+static void log_listener(const char* msg) {
+	k_mutex_lock(&ws_conn_mutex, K_FOREVER);
+	for (uint32_t i = 0; i < MAX_NUM_WS_CONN; i++) {
+		if (ws_conn[i].conn != NULL && ws_conn[i].ready && ws_conn[i].endpoint == WS_ENDPOINT_LOG) {
+			(void)mg_websocket_write(ws_conn[i].conn, MG_WEBSOCKET_OPCODE_TEXT, msg, strlen(msg));
+		}
+	}
+	k_mutex_unlock(&ws_conn_mutex);
+}
+
 void init_websocket_server_handlers(struct mg_context *ctx)
 {
    mygpio_register_listener(gpio_listener);
+	log_register_listener(log_listener);
 
 	mg_set_websocket_handler(ctx, WS_URI_GPIO,
 				ws_connect_handler,
@@ -203,7 +207,7 @@ void init_websocket_server_handlers(struct mg_context *ctx)
 				ws_close_handler,
 				NULL);
 
-   k_thread_name_set(k_current_get(), "websocket_sender");
+   k_thread_name_set(k_current_get(), "ws_sender");
    char msg[WS_GPIO_MSG_LEN];
 
    while (true) {
@@ -217,62 +221,3 @@ void init_websocket_server_handlers(struct mg_context *ctx)
 		k_mutex_unlock(&ws_conn_mutex);
    }
 }
-
-static void ws_log(char* data, size_t length) {
-	k_mutex_lock(&ws_conn_mutex, K_FOREVER);
-	for (uint32_t i = 0; i < MAX_NUM_WS_CONN; i++) {
-		if (ws_conn[i].conn != NULL && ws_conn[i].ready && ws_conn[i].endpoint == WS_ENDPOINT_LOG) {
-			(void)mg_websocket_write(ws_conn[i].conn, MG_WEBSOCKET_OPCODE_TEXT, data, length);
-		}
-	}
-	k_mutex_unlock(&ws_conn_mutex);
-}
-
-static int ws_char_out(uint8_t *data, size_t length, void *ctx)
-{
-	static uint32_t index = 0;
-	static uint8_t immediate_buffer[WS_LOG_LINE_LEN + 1];
-
-	if (length == 0) {
-		ws_log(immediate_buffer, index);
-		index = 0;
-	} else if (length == 1) {
-		immediate_buffer[index++] = *data;
-		if (index == sizeof(immediate_buffer) - 1) {
-			ws_log(immediate_buffer, index);
-			index = 0;
-		}
-	} else {
-		ws_log(data, length);
-		index = 0;		
-	}
-
-	return length;
-}
-
-static void sync_string(const struct log_backend *const backend,
-			struct log_msg_ids src_level, uint32_t timestamp,
-			const char *fmt, va_list ap)
-{
-	uint32_t flags = LOG_OUTPUT_FLAG_LEVEL;
-	uint32_t key;
-
-	flags |= LOG_OUTPUT_FLAG_TIMESTAMP;
-	flags |= LOG_OUTPUT_FLAG_FORMAT_TIMESTAMP;
-
-	key = irq_lock();
-	log_output_string(&log_output_ws, src_level,
-			  timestamp, fmt, ap, flags);
-	irq_unlock(key);
-}
-
-const struct log_backend_api log_backend_ws_api = {
-	.put = NULL,
-	.put_sync_string = sync_string,
-	.put_sync_hexdump = NULL,
-	.panic = NULL,
-	.init = NULL,
-	.dropped = NULL
-};
-
-LOG_BACKEND_DEFINE(log_backend_ws, log_backend_ws_api, true);

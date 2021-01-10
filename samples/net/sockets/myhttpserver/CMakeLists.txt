@@ -13,7 +13,7 @@ project(civetweb)
 set(HTML_DYNAMIC_FILES buttons.htm switches.htm inputs.htm)
 set(HTML_STATIC_FILES webshell.htm live_log.htm index.htm bootstrap.bundle.min.js bootstrap.min.css jquery-3.3.1.min.js)
 
-target_sources(app PRIVATE src/main.c src/log_backend_rb.c src/mysettings.c src/mygpio.c src/web_shell.c src/websocket.c
+target_sources(app PRIVATE src/main.c src/my_log_backend.c src/mysettings.c src/mygpio.c src/web_shell.c src/websocket.c
                src/libc_extensions.c src/cJSON.c src/cJSON_Utils.c)
 
 foreach(HTML_FILE ${HTML_STATIC_FILES})
