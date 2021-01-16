@@ -76,8 +76,8 @@ static const char jquery_js[] = {
 
 struct file_def file_system[] = {
 	{.path = "/", .mime = "text/html", .data = index_htm, .len = sizeof(index_htm)},
-	{.path = "/webshell", .mime = "text/html", .data = webshell_htm, .len = sizeof(webshell_htm)},
-	{.path = "/live_log", .mime = "text/html", .data = live_log_htm, .len = sizeof(live_log_htm)},
+	{.path = "/webshell.htm", .mime = "text/html", .data = webshell_htm, .len = sizeof(webshell_htm)},
+	{.path = "/live_log.htm", .mime = "text/html", .data = live_log_htm, .len = sizeof(live_log_htm)},
 	{.path = "/bootstrap.bundle.min.js", .mime = "text/javascript", .data = bootstrap_js, .len = sizeof(bootstrap_js)},
 	{.path = "/bootstrap.min.css", .mime = "text/css", .data = bootstrap_css, .len = sizeof(bootstrap_css)},
 	{.path = "/jquery-3.3.1.min.js", .mime = "text/javascript", .data = jquery_js, .len = sizeof(jquery_js)},
@@ -147,11 +147,9 @@ static int set_output_handler(struct mg_connection *conn, void *cbdata) {
 	char *current_key = NULL;
 
 	bool schema_ok = true;
-	cJSON_ArrayForEach(elem, obj)
-	{
+	cJSON_ArrayForEach(elem, obj) {
 		current_key = elem->string;
-		if (current_key != NULL)
-		{
+		if (current_key != NULL) {
 			if (elem->type != cJSON_Number) {
 				schema_ok = false;
 				LOG_INF("error: element type for %s is not a number", current_key);	
@@ -184,8 +182,7 @@ static int set_output_handler(struct mg_connection *conn, void *cbdata) {
 	}
 
 	// schema is ok, so set outputs now
-	cJSON_ArrayForEach(elem, obj)
-	{
+	cJSON_ArrayForEach(elem, obj) {
 		current_key = elem->string;
 		if (0 != strcmp(current_key, "delay")) {
 			(void)set_output_by_name(current_key, elem->valueint, timer);

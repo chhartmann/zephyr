@@ -1,10 +1,12 @@
-<html lang="en"><head>
-   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<html lang="en">
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-   <script>
-   $(document).ready(function() {      
-        var ws = new WebSocket("ws://" + $(location).attr('hostname') + "/ws_log");
-        var connection_failed = false;
+  <script>
+    $(document).ready(function () {
+      var ws = new WebSocket("ws://" + $(location).attr('hostname') + "/ws_log");
+      var connection_failed = false;
       function liveUpdateOn() {
         connection_failed = false;
         $("body").append("connection to log established...");
@@ -12,9 +14,9 @@
       }
       function liveUpdateOff() {
         if (!connection_failed) {
-         connection_failed = true;
-         $("body").append("no connection to log...");         
-         $("body").append("</br>");         
+          connection_failed = true;
+          $("body").append("no connection to log...");
+          $("body").append("</br>");
         }
       }
       ws.onclose = liveUpdateOff;
@@ -24,14 +26,16 @@
       ws.onmessage = function (event) {
         $("body").append(event.data);
         $("body").append("</br>");
-        window.scrollTo(0,document.body.scrollHeight);      
+        window.scrollTo(0, document.body.scrollHeight);
       }
 
       window.onbeforeunload = function () {
-         ws.close();
+        ws.close();
       };
-   });
-   </script>
-<body style="font-family:monospace;"> 
+    });
+  </script>
+
+<body style="font-family:monospace;">
 </body>
+
 </html>

@@ -5,27 +5,43 @@
 
 <!--int button_handler(struct mg_connection *conn, void *cbdata) { -->
 <!--send_ok(conn, "text/html");-->
-<html lang="en"><head>
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <link rel="stylesheet" href="bootstrap.min.css">
-  <script src="jquery-3.3.1.min.js"></script>
-  <script src="bootstrap.bundle.min.js"></script>
-  <title>Buttons</title></head><body>
-  <div class="container"><div class="row">
-  <div class="col-sm"></div>
-  <div class="col-sm"><div class="btn-toolbar">
-  <!--for (uint32_t i = 0; i < NUM_OUTPUTS; i++) {-->
-  <!--mg_printf(conn, "<input class=\"btn btn-primary m-1\" value=\"%s\"/>\n", get_output(i)->json_name);-->
-  <!--}-->
-  </div></div>                       
-  <div class="col-sm"></div>
-  </div></div>
-  <script>
-  $(document).ready(function(){
-     $(".btn").on("mousedown", function(e) { $.post("/set_outputs", `{"${e.target.value}":1}`); });
-     $(".btn").on("mouseup", function(e) { $.post("/set_outputs", `{"${e.target.value}":0}`); });
-  });
-  </script>
-  </body></html>
-  <!--return 200;-->
-  <!--}-->
+
+<html lang="en">
+
+<head>
+   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+   <link rel="stylesheet" href="bootstrap.min.css" />
+   <script src="jquery-3.3.1.min.js"></script>
+   <script src="bootstrap.bundle.min.js"></script>
+   <title>Buttons</title>
+</head>
+
+<body>
+   <div class="container">
+      <div class="row">
+         <div class="col-sm"></div>
+         <div class="col-sm">
+            <div class="btn-toolbar">
+               <!--for (uint32_t i = 0; i < NUM_OUTPUTS; i++) {-->
+               <!--mg_printf(conn, "<input class=\"btn btn-primary m-1\" value=\"%s\"/>\n", get_output(i)->json_name);-->
+               <!--}-->
+            </div>
+         </div>
+         <div class="col-sm"></div>
+      </div>
+   </div>
+   <script>
+      $(document).ready(function () {
+         $(".btn").on("mousedown", function (e) {
+            $.post("/set_outputs", `{"${e.target.value}":1}`);
+         });
+         $(".btn").on("mouseup", function (e) {
+            $.post("/set_outputs", `{"${e.target.value}":0}`);
+         });
+      });
+   </script>
+</body>
+
+</html>
+<!--return 200;-->
+<!--}-->

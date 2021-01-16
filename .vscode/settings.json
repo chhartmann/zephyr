@@ -29,5 +29,7 @@
     "files.associations": {
         "cstdlib": "cpp",
         "*.cp": "c"
-    }
+    },
+    "[javascript]": { "editor.formatOnSave": true },
+    "[html]": { "editor.formatOnSave": true },
 }

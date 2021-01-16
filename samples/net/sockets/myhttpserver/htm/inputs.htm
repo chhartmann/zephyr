@@ -5,77 +5,93 @@
 
 <!--int input_handler(struct mg_connection *conn, void *cbdata) { -->
 <!--send_ok(conn, "text/html");-->
-<html lang="en"><head>
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <link rel="stylesheet" href="bootstrap.min.css">
+<html lang="en">
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <link rel="stylesheet" href="bootstrap.min.css" />
   <style>
-    .fa { margin-right: 15px; }
-    .list-group-item { display: flex; justify-content: space-between; width: 100%; }
+    .fa {
+      margin-right: 15px;
+    }
+
+    .list-group-item {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+    }
   </style>
   <script src="jquery-3.3.1.min.js"></script>
   <script src="bootstrap.bundle.min.js"></script>
-  <title>Inputs</title></head><body>
-  <div class="container"><div class="row">
-  <div class="col-sm"></div>
-  <div class="col-sm">
+  <title>Inputs</title>
+</head>
 
-  <div class="alert alert-secondary" role="alert" id='live-update'></div>
+<body>
+  <div class="container">
+    <div class="row">
+      <div class="col-sm"></div>
+      <div class="col-sm">
+        <div class="alert alert-secondary" role="alert" id="live-update"></div>
 
-   <ul class="list-group">
-  <!--for (uint32_t i = 0; i < NUM_INPUTS; i++) {-->
-    <!-- const char* json_name = get_input(i)->json_name; -->
-   <!-- if (true == get_input_state(i)) { -->
-  <!--mg_printf(conn, "<li class='list-group-item'>%s<span class='badge rounded-pill bg-success' id='%s'>high</span></li>\n", json_name, json_name);-->
-   <!-- } else { -->
-  <!--mg_printf(conn, "<li class='list-group-item'>%s<span class='badge rounded-pill bg-secondary' id='%s'>low</span></li>\n", json_name, json_name);-->
-   <!-- } -->
-  <!--}-->
-    </ul>
-    
-  </div>                       
-  <div class="col-sm"></div>
-  </div></div>
+        <ul class="list-group">
+          <!--for (uint32_t i = 0; i < NUM_INPUTS; i++) {-->
+          <!-- const char* json_name = get_input(i)->json_name; -->
+          <!-- if (true == get_input_state(i)) { -->
+          <!--mg_printf(conn, "<li class='list-group-item'>%s<span class='badge rounded-pill bg-success' id='%s'>high</span></li>\n", json_name, json_name);-->
+          <!-- } else { -->
+          <!--mg_printf(conn, "<li class='list-group-item'>%s<span class='badge rounded-pill bg-secondary' id='%s'>low</span></li>\n", json_name, json_name);-->
+          <!-- } -->
+          <!--}-->
+        </ul>
+      </div>
+      <div class="col-sm"></div>
+    </div>
+  </div>
   <script>
-    $(document).ready(function(){
-        var ws = new WebSocket("ws://" + $(location).attr('hostname') + "/ws_gpio_status");
-        function liveUpdateOn() {
-        $('#live-update').addClass('alert-success');
-        $('#live-update').removeClass('alert-secondary');
-        $('#live-update').text('Live update active');
-    }
-    function liveUpdateOff() {
-        $('#live-update').removeClass('alert-success');
-        $('#live-update').addClass('alert-secondary');    
-        $('#live-update').text('Live update inactive');
-    }
-    ws.onclose = liveUpdateOff;
-    ws.onerror = liveUpdateOff;
-    ws.onopen = liveUpdateOn;
+    $(document).ready(function () {
+      var ws = new WebSocket(
+        "ws://" + $(location).attr("hostname") + "/ws_gpio_status"
+      );
+      function liveUpdateOn() {
+        $("#live-update").addClass("alert-success");
+        $("#live-update").removeClass("alert-secondary");
+        $("#live-update").text("Live update active");
+      }
+      function liveUpdateOff() {
+        $("#live-update").removeClass("alert-success");
+        $("#live-update").addClass("alert-secondary");
+        $("#live-update").text("Live update inactive");
+      }
+      ws.onclose = liveUpdateOff;
+      ws.onerror = liveUpdateOff;
+      ws.onopen = liveUpdateOn;
 
-        ws.onmessage = function (event) {
-          var data = JSON.parse(event.data);
-          console.log(data);
-          var id = Object.keys(data)[0];
-          var elem = $("[id='"+id+"']");
-          if (elem) {
-            if (data[id] == 0) {
-              elem.addClass("bg-secondary");
-              elem.text("low");
-              elem.removeClass("bg-success");
-            } else {
-              elem.addClass("bg-success");
-              elem.removeClass("bg-secondary");
-              elem.text("high");
-            }
+      ws.onmessage = function (event) {
+        var data = JSON.parse(event.data);
+        console.log(data);
+        var id = Object.keys(data)[0];
+        var elem = $("[id='" + id + "']");
+        if (elem) {
+          if (data[id] == 0) {
+            elem.addClass("bg-secondary");
+            elem.text("low");
+            elem.removeClass("bg-success");
+          } else {
+            elem.addClass("bg-success");
+            elem.removeClass("bg-secondary");
+            elem.text("high");
           }
         }
+      };
 
-        window.onbeforeunload = function () {
-          console.log("unload");
-          ws.close();
-        };
-    });    
+      window.onbeforeunload = function () {
+        console.log("unload");
+        ws.close();
+      };
+    });
   </script>
-  </body></html>
-  <!--return 200;-->
-  <!--}-->
+</body>
+
+</html>
+<!--return 200;-->
+<!--}-->

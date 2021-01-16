@@ -5,79 +5,88 @@
 
 <!--int switches_handler(struct mg_connection *conn, void *cbdata) { -->
 <!--send_ok(conn, "text/html");-->
-<html lang="en"><head>
-   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-   <link href="bootstrap.min.css" rel="stylesheet">
+<html lang="en">
+
+<head>
+   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+   <link href="bootstrap.min.css" rel="stylesheet" />
    <script src="bootstrap.bundle.min.js"></script>
    <script src="jquery-3.3.1.min.js"></script>
- 
-   <title>Switches</title></head><body>
-   <div class="container"><div class="row">
-   <div class="col-sm"></div>
-   <div class="col-sm">
 
-   <div class="alert alert-secondary" role="alert" id='live-update'></div>
+   <title>Switches</title>
+</head>
 
-   <input id="default_button" class="btn btn-primary m-1" value="Set all to default"/>
+<body>
+   <div class="container">
+      <div class="row">
+         <div class="col-sm"></div>
+         <div class="col-sm">
+            <div class="alert alert-secondary" role="alert" id="live-update"></div>
 
-   <!--for (uint32_t i = 0; i < NUM_OUTPUTS; i++) {-->
-      <div class="form-check form-switch">
-      <!--const char * const name = get_output(i)->json_name; -->
-      <!--mg_printf(conn, "<input class=\"form-check-input\" type=\"checkbox\" id=\"%s\" %s/>", name, get_output(i)->value > 0 ? "checked" : "");-->
-      <!--mg_printf(conn, "<label class=\"form-check-label\" for=\"%s\">%s</label>", name, name); -->
-       </div>
-   <!--}-->
-  
-   </div>                       
-   <div class="col-sm"></div>
-   </div></div>
+            <input id="default_button" class="btn btn-primary m-1" value="Set all to default" />
+
+            <!--for (uint32_t i = 0; i < NUM_OUTPUTS; i++) {-->
+            <div class="form-check form-switch">
+               <!--const char * const name = get_output(i)->json_name; -->
+               <!--mg_printf(conn, "<input class=\"form-check-input\" type=\"checkbox\" id=\"%s\" %s/>", name, get_output(i)->value > 0 ? "checked" : "");-->
+               <!--mg_printf(conn, "<label class=\"form-check-label\" for=\"%s\">%s</label>", name, name); -->
+            </div>
+            <!--}-->
+         </div>
+         <div class="col-sm"></div>
+      </div>
+   </div>
    <script>
-   $(document).ready(function() {      
-      $(":checkbox").change(function () { 
-         var id = $(this).prop("id");
-         var val = $(this).prop("checked") ? 1 : 0;
-         $.post("/set_outputs", `{"${id}":${val}}`); 
-      });
-      $("#default_button").click(function () {
-         $.post("/set_default"); 
-         location.reload();
-      });
-      var ws = new WebSocket("ws://" + $(location).attr('hostname') + "/ws_gpio_status");
-      function liveUpdateOn() {
-        $('#live-update').addClass('alert-success');
-        $('#live-update').removeClass('alert-secondary');
-        $('#live-update').text('Live update active');
-      }
-      function liveUpdateOff() {
-         $('#live-update').removeClass('alert-success');
-         $('#live-update').addClass('alert-secondary');    
-         $('#live-update').text('Live update inactive');
-      }
-      ws.onclose = liveUpdateOff;
-      ws.onerror = liveUpdateOff;
-      ws.onopen = liveUpdateOn;
-
-      ws.onmessage = function (event) {
-         var data = JSON.parse(event.data);
-         console.log(data);
-         var id = Object.keys(data)[0];
-         var elem = $("[id='"+id+"']");
-         if (elem) {
-            elem.prop('checked', data[id]);
-            if (data[id] == 0 && elem.hasClass('checked')) {
-               elem.removeClass('checked');    
-            } else if (data[id] != 0 && !elem.hasClass('checked')) {
-               elem.addClass('checked');    
-            }
+      $(document).ready(function () {
+         $(":checkbox").change(function () {
+            var id = $(this).prop("id");
+            var val = $(this).prop("checked") ? 1 : 0;
+            $.post("/set_outputs", `{"${id}":${val}}`);
+         });
+         $("#default_button").click(function () {
+            $.post("/set_default");
+            location.reload();
+         });
+         var ws = new WebSocket(
+            "ws://" + $(location).attr("hostname") + "/ws_gpio_status"
+         );
+         function liveUpdateOn() {
+            $("#live-update").addClass("alert-success");
+            $("#live-update").removeClass("alert-secondary");
+            $("#live-update").text("Live update active");
          }
-      }
+         function liveUpdateOff() {
+            $("#live-update").removeClass("alert-success");
+            $("#live-update").addClass("alert-secondary");
+            $("#live-update").text("Live update inactive");
+         }
+         ws.onclose = liveUpdateOff;
+         ws.onerror = liveUpdateOff;
+         ws.onopen = liveUpdateOn;
 
-      window.onbeforeunload = function () {
-         console.log("unload");
-         ws.close();
-      };
-   });
+         ws.onmessage = function (event) {
+            var data = JSON.parse(event.data);
+            console.log(data);
+            var id = Object.keys(data)[0];
+            var elem = $("[id='" + id + "']");
+            if (elem) {
+               elem.prop("checked", data[id]);
+               if (data[id] == 0 && elem.hasClass("checked")) {
+                  elem.removeClass("checked");
+               } else if (data[id] != 0 && !elem.hasClass("checked")) {
+                  elem.addClass("checked");
+               }
+            }
+         };
+
+         window.onbeforeunload = function () {
+            console.log("unload");
+            ws.close();
+         };
+      });
    </script>
-   </body></html>
-   <!--return 200;-->
-   <!--}-->
+</body>
+
+</html>
+<!--return 200;-->
+<!--}-->
