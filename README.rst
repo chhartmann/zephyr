@@ -1,13 +1,12 @@
 HTTP server for nucleo_h743zi
-#############################
+
 
 Overview
 ********
 This is an extention of the existing webserver example customized for nucleo_h743zi2 board:
 
 * Telnet and serial shell are enabled with GPIO shell and date shell configured.
-* The ringbuffer log, which was part in earlier zephyr version, has been adapted. Immediate logging is activated.
-* It uses tha last 64Kbyte of the RAM. It can be printed with a shell command similar to dmesg.
+* A ram-log-ringbuffer is used. It can be printed with a shell command similar to dmesg.
 * DHCP is enabled. MAC address is currently read from flash. This will change in the future. By default only hardcoded or random MAC address is supported.
 * SNTP is used to get the current time. The default code for doing this is executed too early. Therefore a hook has been added where the SNTP routine is called.
 

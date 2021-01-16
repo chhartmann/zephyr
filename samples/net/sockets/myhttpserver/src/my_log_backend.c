@@ -16,7 +16,7 @@
 #include "my_log_backend.h"
 
 static struct ring_buf ringbuf;
-
+static uint8_t my_ringbuf_buffer[MY_LOG_BACKEND_RB_MEM_SIZE];
 /*
  * Log message format:
  * Logging started with magic number 0x55aa followed by log message id.
@@ -40,8 +40,7 @@ void log_register_listener(void(*fun_ptr)(const char*)) {
 
 static void init(void)
 {
-	ring_buf_init(&ringbuf, MY_LOG_BACKEND_RB_MEM_SIZE,
-		      (void *)MY_LOG_BACKEND_RB_MEM_BASE);
+	ring_buf_init(&ringbuf, sizeof(my_ringbuf_buffer), my_ringbuf_buffer);
 }
 
 static void trace(const uint8_t *data, size_t length)
